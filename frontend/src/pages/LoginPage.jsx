@@ -1,11 +1,16 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
 import FormInput from '../components/FormInput';
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
 
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -41,30 +46,14 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || 'Something went wrong');
+      const user = await login(formData.email, formData.password);
+      // Redirect based on role: admin → /admin, customer → original destination or /
+      if (user.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        const from = location.state?.from?.pathname || '/';
+        navigate(from, { replace: true });
       }
-
-      // Success
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      console.log('Login success:', data);
-      
-      setErrors({});
-      alert(data.message || 'Login successful!');
     } catch (err) {
       setErrors({ general: err.message });
     } finally {

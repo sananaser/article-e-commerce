@@ -9,8 +9,6 @@ const ErrorResponse = require("../utils/errorResponse");
 // @access  Public
 const registerUser = asyncHandler(async (req, res, next) => {
   const { name, email, password, role } = req.body;
-  console.log(req.body)
-   console.log(name, email, password, role);
   // Check if user already exists
   const userExists = await User.findOne({ email });
 
@@ -47,7 +45,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
 // @access  Public
 const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
-
+  
   // Validate email & password
   if (!email || !password) {
     return next(new ErrorResponse("Please provide an email and password", 400));
@@ -57,7 +55,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
   const user = await User.findOne({ email });
 
   if (!user) {
-    return next(new ErrorResponse("Invalid credentials", 401));
+    return next(new ErrorResponse("User not found", 401));
   }
 
   // Check if password matches

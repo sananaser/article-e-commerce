@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
 import FormInput from '../components/FormInput';
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
 
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
+  const { register } = useAuth();
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -75,31 +79,9 @@ const RegisterPage = () => {
     setLoading(true);
     try {
       const name = `${formData.firstName} ${formData.lastName}`.trim();
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || 'Something went wrong');
-      }
-
-      // Success
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      console.log('Register success:', data);
-
-      setErrors({});
-      alert(data.message || 'Registration successful!');
+      await register(name, formData.email, formData.password);
+      // Redirect to home after successful registration
+      navigate('/', { replace: true });
     } catch (err) {
       setErrors({ general: err.message });
     } finally {
