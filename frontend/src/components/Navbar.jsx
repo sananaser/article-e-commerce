@@ -22,14 +22,17 @@ const Navbar = ({ cartCount = 0 }) => {
     }
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === '/') return location.pathname === '/' || location.pathname === '/shop';
+    return location.pathname === path;
+  };
 
   return (
     <nav className="navbar">
       <div className="navbar-inner">
         {/* Logo */}
         <Link to="/" className="navbar-logo">
-          MOD<span>É</span>
+          ARTICL<span>É</span>
         </Link>
 
         {/* Nav Links */}
@@ -37,7 +40,7 @@ const Navbar = ({ cartCount = 0 }) => {
           <li>
             <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}
               onClick={() => setMenuOpen(false)}>
-              Home
+              Shop
             </Link>
           </li>
           <li>

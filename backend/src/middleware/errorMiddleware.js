@@ -25,6 +25,14 @@ const errorHandler = (err, req, res, next) => {
     error = new ErrorResponse(message, 400);
   }
 
+  // Multer upload errors
+  if (err.code === "LIMIT_FILE_SIZE") {
+    error = new ErrorResponse("File too large. Maximum size is 5 MB per image", 400);
+  }
+  if (err.code === "LIMIT_FILE_COUNT" || err.code === "LIMIT_UNEXPECTED_FILE") {
+    error = new ErrorResponse("Too many files. Maximum is 5 images per upload", 400);
+  }
+
   res.status(error.statusCode || 500).json({
     success: false,
     error: error.message || "Server Error",

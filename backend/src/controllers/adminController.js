@@ -77,7 +77,7 @@ const toggleUserBlock = asyncHandler(async (req, res, next) => {
   }
 
   // Prevent blocking an administrator
-  if (user.role === "admin") {
+  if (user.role === "admin") { 
     return next(new ErrorResponse("Cannot block or modify an administrator account", 400));
   }
 
@@ -99,8 +99,25 @@ const toggleUserBlock = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Get all orders (admin)
+// @route   GET /api/admin/orders
+// @access  Private/Admin
+const getAllOrders = asyncHandler(async (req, res, next) => {
+  const orders = await Order.find({})
+    .populate({ path: "user", select: "name email" })
+    .populate({ path: "products.product", select: "name price images brand" })
+    .sort("-createdAt");
+
+  res.status(200).json({
+    success: true,
+    count: orders.length,
+    data: orders,
+  });
+});
+
 module.exports = {
   getDashboardStats,
   getUsers,
   toggleUserBlock,
+  getAllOrders,
 };

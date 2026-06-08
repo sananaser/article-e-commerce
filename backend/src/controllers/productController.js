@@ -2,6 +2,23 @@ const Product = require("../models/Product");
 const Category = require("../models/Category");
 const asyncHandler = require("../middleware/asyncHandler");
 const ErrorResponse = require("../utils/errorResponse");
+const { deleteProductImageFiles } = require("../utils/productImages");
+
+// @desc    Upload product images
+// @route   POST /api/products/upload
+// @access  Private/Admin
+const uploadProductImages = asyncHandler(async (req, res, next) => {
+  if (!req.files || req.files.length === 0) {
+    return next(new ErrorResponse("Please upload at least one image", 400));
+  }
+
+  const images = req.files.map((file) => `/uploads/products/${file.filename}`);
+
+  res.status(200).json({
+    success: true,
+    data: { images },
+  });
+});
 
 // @desc    Create a product
 // @route   POST /api/products
@@ -168,6 +185,13 @@ const updateProduct = asyncHandler(async (req, res, next) => {
     }
   }
 
+  const removedImages = (product.images || []).filter(
+    (img) => !(req.body.images || []).includes(img)
+  );
+  if (removedImages.length > 0) {
+    deleteProductImageFiles(removedImages);
+  }
+
   product = await Product.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
@@ -189,6 +213,7 @@ const deleteProduct = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Product not found with id of ${req.params.id}`, 404));
   }
 
+  deleteProductImageFiles(product.images || []);
   await product.deleteOne();
 
   res.status(200).json({
@@ -198,6 +223,7 @@ const deleteProduct = asyncHandler(async (req, res, next) => {
 });
 
 module.exports = {
+  uploadProductImages,
   createProduct,
   getProducts,
   getProductById,

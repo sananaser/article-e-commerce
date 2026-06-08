@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const {
+  uploadProductImages,
   createProduct,
   getProducts,
   getProductById,
@@ -10,6 +11,15 @@ const {
 } = require("../controllers/productController");
 
 const { protect, admin } = require("../middleware/authMiddleware");
+const { uploadProductImages: uploadMiddleware } = require("../middleware/uploadMiddleware");
+
+router.post(
+  "/upload",
+  protect,
+  admin,
+  uploadMiddleware.array("images", 5),
+  uploadProductImages
+);
 
 router
   .route("/")

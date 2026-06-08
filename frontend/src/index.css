@@ -63,12 +63,17 @@ body {
   box-sizing: border-box;
 }
 
-/* Customer-facing pages keep the centred, bordered layout */
-#root:not(:has(.admin-shell)) {
+/* Auth pages keep the centred, bordered layout */
+#root:not(:has(.admin-shell)):not(:has(.customer-shell)) {
   max-width: 1126px;
   margin: 0 auto;
   text-align: center;
   border-inline: 1px solid var(--border);
+}
+
+.customer-shell {
+  width: 100%;
+  text-align: left;
 }
 
 h1,

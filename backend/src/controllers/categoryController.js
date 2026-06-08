@@ -1,4 +1,5 @@
 const Category = require("../models/Category");
+const Product = require("../models/Product");
 const asyncHandler = require("../middleware/asyncHandler");
 const ErrorResponse = require("../utils/errorResponse");
 
@@ -50,12 +51,24 @@ const createCategory = asyncHandler(async (req, res, next) => {
 // @route   GET /api/categories
 // @access  Public
 const getCategories = asyncHandler(async (req, res, next) => {
-  const categories = await Category.find();
+  const categories = await Category.find().lean();
+
+  const counts = await Product.aggregate([
+    { $group: { _id: "$category", count: { $sum: 1 } } },
+  ]);
+  const countMap = Object.fromEntries(
+    counts.map((c) => [c._id.toString(), c.count])
+  );
+
+  const data = categories.map((cat) => ({
+    ...cat,
+    productCount: countMap[cat._id.toString()] || 0,
+  }));
 
   res.status(200).json({
     success: true,
-    count: categories.length,
-    data: categories,
+    count: data.length,
+    data,
   });
 });
 
@@ -107,6 +120,16 @@ const deleteCategory = asyncHandler(async (req, res, next) => {
 
   if (!category) {
     return next(new ErrorResponse(`Category not found with id of ${req.params.id}`, 404));
+  }
+
+  const productCount = await Product.countDocuments({ category: req.params.id });
+  if (productCount > 0) {
+    return next(
+      new ErrorResponse(
+        `Cannot delete category with ${productCount} linked product(s). Reassign or remove them first.`,
+        400
+      )
+    );
   }
 
   await category.deleteOne();

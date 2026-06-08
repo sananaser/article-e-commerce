@@ -3,6 +3,9 @@ import LoginPage    from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AdminRoute     from './routes/AdminRoute';
+import CustomerLayout from './layouts/CustomerLayout';
+import ShopPage       from './pages/ShopPage';
+import UserDashboard  from './pages/UserDashboard';
 
 // Admin shell & pages
 import AdminLayout    from './admin/AdminLayout';
@@ -22,16 +25,16 @@ function App() {
 
         {/* ── Protected customer routes ──────────────────────────── */}
         <Route
-          path="/"
           element={
             <ProtectedRoute>
-              <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <h1>🏠 Home Page — coming soon</h1>
-                <p style={{ color: '#6b7280' }}>You are logged in!</p>
-              </div>
+              <CustomerLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<ShopPage />} />
+          <Route path="shop" element={<ShopPage />} />
+          <Route path="profile" element={<UserDashboard />} />
+        </Route>
 
         {/* ── Admin routes (logged in + admin role) ─────────────── */}
         <Route
