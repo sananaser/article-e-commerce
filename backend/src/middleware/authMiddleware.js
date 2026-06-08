@@ -31,6 +31,10 @@ const protect = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse("No user found with this id", 404));
     }
 
+    if (req.user.status === "Blocked") {
+      return next(new ErrorResponse("Not authorized. Your account has been blocked.", 403));
+    }
+
     next();
   } catch (err) {
     return next(new ErrorResponse("Not authorized to access this route", 401));

@@ -1,30 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../AdminLayout.css';
-
-const INITIAL_USERS = [
-  { id: 1, name: 'Arjun Sharma',  email: 'arjun@example.com',  role: 'customer', status: 'Active',  joined: '2024-01-15', orders: 8  },
-  { id: 2, name: 'Priya Nair',    email: 'priya@example.com',  role: 'customer', status: 'Active',  joined: '2024-02-03', orders: 14 },
-  { id: 3, name: 'Rohan Mehta',   email: 'rohan@example.com',  role: 'customer', status: 'Blocked', joined: '2024-02-20', orders: 2  },
-  { id: 4, name: 'Sneha Kapoor',  email: 'sneha@example.com',  role: 'customer', status: 'Active',  joined: '2024-03-11', orders: 6  },
-  { id: 5, name: 'Admin User',    email: 'admin@example.com',  role: 'admin',    status: 'Active',  joined: '2024-01-01', orders: 0  },
-  { id: 6, name: 'Vikram Reddy',  email: 'vikram@example.com', role: 'customer', status: 'Active',  joined: '2024-04-07', orders: 3  },
-];
+import { getUsers, toggleUserBlock } from '../../services/userService';
+import { useAuth } from '../../context/AuthContext';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState(INITIAL_USERS);
+  const { token } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const res = await getUsers(token);
+        setUsers(res.data || []);
+      } catch (err) {
+        setError(err.message || 'Failed to load users');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchUsers();
+    }
+  }, [token]);
+
   const filtered = users.filter((u) => {
-    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
+    const nameMatch = u.name ? u.name.toLowerCase().includes(search.toLowerCase()) : false;
+    const emailMatch = u.email ? u.email.toLowerCase().includes(search.toLowerCase()) : false;
+    const matchSearch = nameMatch || emailMatch;
     const matchStatus = filterStatus === 'All' || u.status === filterStatus;
     return matchSearch && matchStatus;
   });
 
-  const toggleBlock = (id) => {
-    setUsers(users.map((u) =>
-      u.id === id ? { ...u, status: u.status === 'Active' ? 'Blocked' : 'Active' } : u
-    ));
+  const toggleBlock = async (id) => {
+    try {
+      const res = await toggleUserBlock(id, token);
+      setUsers(
+        users.map((u) =>
+          u.id === id ? { ...u, status: res.data.status } : u
+        )
+      );
+    } catch (err) {
+      alert(err.message || 'Failed to toggle user status');
+    }
   };
 
   return (
@@ -60,7 +84,17 @@ export default function UsersPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="empty-state">
+            <span className="empty-state-icon">🔄</span>
+            <p className="empty-state-text">Loading users...</p>
+          </div>
+        ) : error ? (
+          <div className="empty-state">
+            <span className="empty-state-icon">⚠️</span>
+            <p className="empty-state-text" style={{ color: '#ef4444' }}>{error}</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="empty-state">
             <span className="empty-state-icon">👥</span>
             <p className="empty-state-text">No users found</p>
@@ -93,7 +127,7 @@ export default function UsersPage() {
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
                         }}>
-                          {u.name[0]}
+                          {u.name ? u.name[0].toUpperCase() : '?'}
                         </div>
                         <div>
                           <p style={{ margin: 0, fontWeight: 600, color: '#f3f4f6', fontSize: 14 }}>{u.name}</p>
@@ -134,6 +168,7 @@ export default function UsersPage() {
     </div>
   );
 }
+
 
 /* Icons */
 function SearchIcon()  { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>; }

@@ -58,6 +58,16 @@ const loginUser = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse("User not found", 401));
   }
 
+  // Check if user is blocked
+  if (user.status === "Blocked") {
+    return next(
+      new ErrorResponse(
+        "Your account is blocked. Please contact support.",
+        403
+      )
+    );
+  }
+
   // Check if password matches
   const isMatch = await bcrypt.compare(password, user.password);
 
