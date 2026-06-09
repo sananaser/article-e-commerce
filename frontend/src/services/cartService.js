@@ -27,10 +27,10 @@ export const addToCart = async (token, productId, quantity = 1) => {
 
 /** Update cart item quantity */
 export const updateCartItem = async (token, productId, quantity) => {
-  const res = await fetch(`${BASE_URL}/${productId}`, {
+  const res = await fetch(`${BASE_URL}/quantity`, {
     method: 'PUT',
     headers: authHeaders(token),
-    body: JSON.stringify({ quantity }),
+    body: JSON.stringify({ productId, quantity }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to update cart');
@@ -39,7 +39,7 @@ export const updateCartItem = async (token, productId, quantity) => {
 
 /** Remove item from cart */
 export const removeFromCart = async (token, productId) => {
-  const res = await fetch(`${BASE_URL}/${productId}`, {
+  const res = await fetch(`${BASE_URL}/item/${productId}`, {
     method: 'DELETE',
     headers: authHeaders(token),
   });

@@ -45,7 +45,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
 // @access  Public
 const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
-  
+  console.log("email and password:",email,password);
   // Validate email & password
   if (!email || !password) {
     return next(new ErrorResponse("Please provide an email and password", 400));

@@ -46,6 +46,7 @@ app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
 app.use("/api/wishlist", require("./routes/wishlistRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
+app.use("/api/addresses", require("./routes/addressRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 
 // Global error handler middleware (must be registered last)

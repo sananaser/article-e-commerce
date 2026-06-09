@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import { getProducts } from "../services/productService";
 import { getCategories } from "../services/categoryService";
 import {
@@ -8,7 +9,6 @@ import {
   addToWishlist,
   removeFromWishlist,
 } from "../services/wishlistService";
-import { addToCart } from "../services/cartService";
 import "./ShopPage.css";
 
 const PLACEHOLDER_IMAGE =
@@ -29,6 +29,7 @@ export default function ShopPage() {
   const highlightedId = searchParams.get("product") || null;
   const searchQuery = searchParams.get("search")?.toLowerCase() || "";
   const { token } = useAuth();
+  const { addItem } = useCart();
 
   const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -151,10 +152,14 @@ export default function ShopPage() {
     }
   };
 
+  const [cartFeedback, setCartFeedback] = useState(null);
+
   const handleAddToCart = async (productId) => {
     if (!token) return;
     try {
-      await addToCart(token, productId, 1);
+      await addItem(productId, 1);
+      setCartFeedback(productId);
+      setTimeout(() => setCartFeedback(null), 1500);
     } catch {
       // silently ignore cart errors on shop page
     }
@@ -164,7 +169,7 @@ export default function ShopPage() {
     <div className="shop">
       <div className="shop__topbar">
         <div>
-          <h1 className="shop__title">Women's Collection</h1>
+          <h1 className="shop__title">Unisex Collection</h1>
           <p className="shop__meta">
             {loading ? "Loading…" : `${products.length} products`}
             {searchQuery && (
@@ -292,6 +297,7 @@ export default function ShopPage() {
                 highlighted={highlightedId === product._id}
                 onClearHighlight={clearHighlight}
                 canInteract={!!token}
+                addedFeedback={cartFeedback === product._id}
               />
             ))
           )}
@@ -312,6 +318,7 @@ const ProductCard = ({
   onClearHighlight,
   cardRef,
   canInteract,
+  addedFeedback,
 }) => {
   const [adding, setAdding] = useState(false);
   const inStock = product.stock > 0;
@@ -378,9 +385,11 @@ const ProductCard = ({
             ? "Sign in to buy"
             : adding
               ? "Adding…"
-              : inStock
-                ? "Add to Cart"
-                : "Out of Stock"}
+              : addedFeedback
+                ? "Added ✓"
+                : inStock
+                  ? "Add to Cart"
+                  : "Out of Stock"}
         </button>
       </div>
     </div>

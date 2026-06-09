@@ -6,6 +6,20 @@ const authHeaders = (token) => ({
   Authorization: `Bearer ${token}`,
 });
 
+export const createOrder = async (token, { shippingAddress, paymentMethod }) => {
+  const response = await fetch(ORDERS_URL, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ shippingAddress, paymentMethod }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || data.message || 'Failed to place order');
+  }
+  return data;
+};
+
 export const getMyOrders = async (token) => {
   const response = await fetch(`${ORDERS_URL}/myorders`, {
     method: 'GET',

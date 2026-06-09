@@ -1,14 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import {
   getWishlist,
   addToWishlist,
   removeFromWishlist,
 } from "../services/wishlistService";
 import { getMyOrders } from "../services/orderService";
-import { addToCart } from "../services/cartService";
 import { getProducts } from "../services/productService";
+import {
+  getAddresses,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+} from "../services/addressService";
 import "./UserDashboard.css";
 
 const PLACEHOLDER_IMAGE =
@@ -42,22 +49,7 @@ const getOrderItemsLabel = (order) =>
     })
     .join(", ") || "—";
 
-const addresses = [
-  {
-    id: 1,
-    label: "Home",
-    line: "12B, Rose Nagar, Palarivattom",
-    city: "Ernakulam, Kerala – 682025",
-    default: true,
-  },
-  {
-    id: 2,
-    label: "Work",
-    line: "Infopark, Tower 3, Phase 2",
-    city: "Kochi, Kerala – 682042",
-    default: false,
-  },
-];
+// Saved addresses are loaded dynamically from the backend
 
 const statusColor = {
   Pending: "status--transit",
@@ -73,6 +65,7 @@ export default function UserDashboard() {
   const initialTab = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
   const { logout, user, token } = useAuth();
+  const { cartCount, addItem } = useCart();
   const navigate = useNavigate();
 
   const [wishlistProducts, setWishlistProducts] = useState([]);
@@ -86,6 +79,10 @@ export default function UserDashboard() {
   const [catalogProducts, setCatalogProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState(null);
+
+  const [userAddresses, setUserAddresses] = useState([]);
+  const [addressesLoading, setAddressesLoading] = useState(true);
+  const [addressesError, setAddressesError] = useState(null);
 
   const fetchWishlist = useCallback(async () => {
     if (!token) {
@@ -141,11 +138,32 @@ export default function UserDashboard() {
     }
   }, []);
 
+  const fetchAddresses = useCallback(async () => {
+    if (!token) {
+      setUserAddresses([]);
+      setAddressesLoading(false);
+      return;
+    }
+
+    setAddressesLoading(true);
+    setAddressesError(null);
+    try {
+      const res = await getAddresses(token);
+      setUserAddresses(res.data || []);
+    } catch (err) {
+      setAddressesError(err.message || "Failed to load addresses");
+      setUserAddresses([]);
+    } finally {
+      setAddressesLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     fetchWishlist();
     fetchOrders();
     fetchProducts();
-  }, [fetchWishlist, fetchOrders, fetchProducts]);
+    fetchAddresses();
+  }, [fetchWishlist, fetchOrders, fetchProducts, fetchAddresses]);
 
   const handleRemoveFromWishlist = async (productId) => {
     if (!token) return;
@@ -160,7 +178,7 @@ export default function UserDashboard() {
   const handleAddToCart = async (productId) => {
     if (!token) return;
     try {
-      await addToCart(token, productId, 1);
+      await addItem(productId, 1);
     } catch (err) {
       setWishlistError(err.message || "Failed to add to cart");
     }
@@ -196,6 +214,11 @@ export default function UserDashboard() {
       label: "Wishlist Items",
       value: wishlistLoading ? "…" : String(wishlistProducts.length),
       icon: "ti-heart",
+    },
+    {
+      label: "Cart Items",
+      value: String(cartCount),
+      icon: "ti-shopping-cart",
     },
     {
       label: "Delivered",
@@ -303,7 +326,15 @@ export default function UserDashboard() {
             onAddToCart={handleAddToCart}
           />
         )}
-        {activeTab === "addresses" && <AddressesTab />}
+        {activeTab === "addresses" && (
+          <AddressesTab
+            addresses={userAddresses}
+            loading={addressesLoading}
+            error={addressesError}
+            token={token}
+            onRefresh={fetchAddresses}
+          />
+        )}
         {activeTab === "account" && <AccountTab user={user} />}
       </main>
     </div>
@@ -683,36 +714,218 @@ function WishlistCard({ product, compact, onRemove, onAddToCart }) {
 }
 
 // ── Addresses ─────────────────────────────────────────────────────
-function AddressesTab() {
+function AddressesTab({ addresses, loading, error, token, onRefresh }) {
+  const [showForm, setShowForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const [formData, setFormData] = useState({
+    label: "",
+    line: "",
+    city: "",
+    default: false,
+  });
+
+  const handleAddNewClick = () => {
+    setEditingAddress(null);
+    setFormData({
+      label: "",
+      line: "",
+      city: "",
+      default: false,
+    });
+    setActionError(null);
+    setShowForm(true);
+  };
+
+  const handleEditClick = (address) => {
+    setEditingAddress(address);
+    setFormData({
+      label: address.label,
+      line: address.line,
+      city: address.city,
+      default: address.default,
+    });
+    setActionError(null);
+    setShowForm(true);
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingAddress(null);
+    setActionError(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setActionError(null);
+    setSaving(true);
+
+    try {
+      if (editingAddress) {
+        await updateAddress(token, editingAddress._id, formData);
+      } else {
+        await addAddress(token, formData);
+      }
+      await onRefresh();
+      setShowForm(false);
+      setEditingAddress(null);
+    } catch (err) {
+      setActionError(err.message || "Failed to save address");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this address?")) return;
+    setActionError(null);
+    try {
+      await deleteAddress(token, id);
+      await onRefresh();
+    } catch (err) {
+      setActionError(err.message || "Failed to delete address");
+    }
+  };
+
+  const handleSetDefault = async (id) => {
+    setActionError(null);
+    try {
+      await setDefaultAddress(token, id);
+      await onRefresh();
+    } catch (err) {
+      setActionError(err.message || "Failed to set default address");
+    }
+  };
+
+  if (showForm) {
+    return (
+      <section>
+        <div className="page-header">
+          <h1 className="page-title">{editingAddress ? "Edit Address" : "Add New Address"}</h1>
+          <p className="page-sub">Fill in the delivery details below</p>
+        </div>
+
+        {actionError && (
+          <p className="dashboard-message dashboard-message--error" style={{ marginBottom: "1rem" }}>
+            {actionError}
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className="account-form">
+          <div className="form-group">
+            <label className="form-label">Address Label</label>
+            <input
+              className="form-input"
+              placeholder="e.g. Home, Work"
+              value={formData.label}
+              onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Address Line</label>
+            <input
+              className="form-input"
+              placeholder="e.g. 12B, Rose Nagar, Palarivattom"
+              value={formData.line}
+              onChange={(e) => setFormData({ ...formData, line: e.target.value })}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">City, State & Pincode</label>
+            <input
+              className="form-input"
+              placeholder="e.g. Ernakulam, Kerala - 682025"
+              value={formData.city}
+              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              required
+            />
+          </div>
+          <div className="form-group" style={{ flexDirection: "row", alignItems: "center", gap: "8px", marginTop: "0.5rem" }}>
+            <input
+              type="checkbox"
+              id="default-address-chk"
+              checked={formData.default}
+              onChange={(e) => setFormData({ ...formData, default: e.target.checked })}
+              style={{ cursor: "pointer" }}
+            />
+            <label htmlFor="default-address-chk" className="form-label" style={{ margin: 0, cursor: "pointer" }}>
+              Set as default address
+            </label>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px", marginTop: "1rem" }}>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? "Saving…" : editingAddress ? "Save Changes" : "Add Address"}
+            </button>
+            <button type="button" className="btn-ghost" onClick={handleCancel} disabled={saving}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </section>
+    );
+  }
+
   return (
     <section>
       <div className="page-header">
         <h1 className="page-title">Saved Addresses</h1>
         <p className="page-sub">Manage your delivery locations</p>
       </div>
-      <div className="address-grid">
-        {addresses.map((a) => (
-          <div className={`address-card ${a.default ? "address-card--default" : ""}`} key={a.id}>
-            <div className="address-card__header">
-              <span className="address-card__label">
-                <i className="ti ti-map-pin" aria-hidden="true" /> {a.label}
-              </span>
-              {a.default && <span className="default-badge">Default</span>}
-            </div>
-            <p className="address-card__line">{a.line}</p>
-            <p className="address-card__city">{a.city}</p>
-            <div className="address-card__actions">
-              <button className="btn-ghost btn-ghost--sm">Edit</button>
-              {!a.default && <button className="btn-ghost btn-ghost--sm">Set Default</button>}
-              {!a.default && <button className="btn-ghost btn-ghost--sm btn-danger">Remove</button>}
-            </div>
-          </div>
-        ))}
-        <button className="address-card address-card--add">
-          <i className="ti ti-plus" aria-hidden="true" />
-          Add New Address
-        </button>
-      </div>
+
+      {(error || actionError) && (
+        <p className="dashboard-message dashboard-message--error" style={{ marginBottom: "1rem" }}>
+          {error || actionError}
+        </p>
+      )}
+
+      {loading ? (
+        <p className="dashboard-message">Loading addresses…</p>
+      ) : (
+        <div className="address-grid">
+          {addresses.length === 0 ? (
+            <p className="dashboard-message" style={{ gridColumn: "span 2" }}>
+              No saved addresses. Add a new address below.
+            </p>
+          ) : (
+            addresses.map((a) => (
+              <div className={`address-card ${a.default ? "address-card--default" : ""}`} key={a._id}>
+                <div className="address-card__header">
+                  <span className="address-card__label">
+                    <i className="ti ti-map-pin" aria-hidden="true" /> {a.label}
+                  </span>
+                  {a.default && <span className="default-badge">Default</span>}
+                </div>
+                <p className="address-card__line">{a.line}</p>
+                <p className="address-card__city">{a.city}</p>
+                <div className="address-card__actions">
+                  <button className="btn-ghost btn-ghost--sm" onClick={() => handleEditClick(a)}>
+                    Edit
+                  </button>
+                  {!a.default && (
+                    <button className="btn-ghost btn-ghost--sm" onClick={() => handleSetDefault(a._id)}>
+                      Set Default
+                    </button>
+                  )}
+                  {!a.default && (
+                    <button className="btn-ghost btn-ghost--sm btn-danger" onClick={() => handleDelete(a._id)}>
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+          <button className="address-card address-card--add" onClick={handleAddNewClick} style={{ gridColumn: addresses.length === 0 ? "span 2" : "auto" }}>
+            <i className="ti ti-plus" aria-hidden="true" />
+            Add New Address
+          </button>
+        </div>
+      )}
     </section>
   );
 }

@@ -1,5 +1,24 @@
 const mongoose = require("mongoose");
 
+const addressSchema = new mongoose.Schema({
+  label: {
+    type: String,
+    required: [true, "Please add a label"],
+  },
+  line: {
+    type: String,
+    required: [true, "Please add an address line"],
+  },
+  city: {
+    type: String,
+    required: [true, "Please add a city/state/zip"],
+  },
+  default: {
+    type: Boolean,
+    default: false,
+  },
+});
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -30,6 +49,7 @@ const userSchema = new mongoose.Schema(
       enum: ["Active", "Blocked"],
       default: "Active",
     },
+    addresses: [addressSchema],
   },
   {
     timestamps: true,

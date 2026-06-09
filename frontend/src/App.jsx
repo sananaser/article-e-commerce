@@ -5,6 +5,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import AdminRoute     from './routes/AdminRoute';
 import CustomerLayout from './layouts/CustomerLayout';
 import ShopPage       from './pages/ShopPage';
+import CartPage       from './pages/CartPage';
 import UserDashboard  from './pages/UserDashboard';
 
 // Admin shell & pages
@@ -33,6 +34,7 @@ function App() {
         >
           <Route index element={<ShopPage />} />
           <Route path="shop" element={<ShopPage />} />
+          <Route path="cart" element={<CartPage />} />
           <Route path="profile" element={<UserDashboard />} />
         </Route>
 
