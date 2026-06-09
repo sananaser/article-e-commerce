@@ -41,9 +41,10 @@ export default function UsersPage() {
   const toggleBlock = async (id) => {
     try {
       const res = await toggleUserBlock(id, token);
-      setUsers(
-        users.map((u) =>
-          u.id === id ? { ...u, status: res.data.status } : u
+      // Backend returns _id; update the matching user's status in local state
+      setUsers((prev) =>
+        prev.map((u) =>
+          String(u._id) === String(id) ? { ...u, status: res.data.status } : u
         )
       );
     } catch (err) {
@@ -115,7 +116,7 @@ export default function UsersPage() {
               </thead>
               <tbody>
                 {filtered.map((u, i) => (
-                  <tr key={u.id}>
+                  <tr key={u._id}>
                     <td style={{ color: '#6b7280', fontSize: 13 }}>{i + 1}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -151,8 +152,8 @@ export default function UsersPage() {
                       {u.role !== 'admin' && (
                         <button
                           className={`btn btn-sm ${u.status === 'Active' ? 'btn-danger' : 'btn-ghost'}`}
-                          onClick={() => toggleBlock(u.id)}
-                          id={`btn-toggle-user-${u.id}`}
+                          onClick={() => toggleBlock(u._id)}
+                          id={`btn-toggle-user-${u._id}`}
                         >
                           {u.status === 'Active' ? <><BlockIcon /> Block</> : <><UnblockIcon /> Unblock</>}
                         </button>
