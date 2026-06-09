@@ -72,3 +72,17 @@ export const updateOrderStatus = async (id, status, token) => {
   }
   return data;
 };
+
+export const cancelOrder = async (id, token) => {
+  const response = await fetch(`${ORDERS_URL}/${id}/cancel`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || data.message || 'Failed to cancel order');
+  }
+  return data;
+};
+

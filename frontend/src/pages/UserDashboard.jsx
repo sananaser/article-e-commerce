@@ -7,7 +7,7 @@ import {
   addToWishlist,
   removeFromWishlist,
 } from "../services/wishlistService";
-import { getMyOrders } from "../services/orderService";
+import { getMyOrders, getOrderById, cancelOrder } from "../services/orderService";
 import { getProducts } from "../services/productService";
 import {
   getAddresses,
@@ -83,6 +83,42 @@ export default function UserDashboard() {
   const [userAddresses, setUserAddresses] = useState([]);
   const [addressesLoading, setAddressesLoading] = useState(true);
   const [addressesError, setAddressesError] = useState(null);
+
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderDetailLoading, setOrderDetailLoading] = useState(false);
+  const [orderDetailError, setOrderDetailError] = useState(null);
+  const [cancellingId, setCancellingId] = useState(null);
+
+  const handleViewDetails = async (orderId) => {
+    setOrderDetailLoading(true);
+    setOrderDetailError(null);
+    setSelectedOrder({ _id: orderId, loading: true });
+    try {
+      const res = await getOrderById(orderId, token);
+      setSelectedOrder(res.data);
+    } catch (err) {
+      setOrderDetailError(err.message || "Failed to load order details");
+      setSelectedOrder(null);
+    } finally {
+      setOrderDetailLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) return;
+    setCancellingId(orderId);
+    try {
+      await cancelOrder(orderId, token);
+      await fetchOrders();
+      // Re-fetch the selected order to show updated status
+      const res = await getOrderById(orderId, token);
+      setSelectedOrder(res.data);
+    } catch (err) {
+      alert(err.message || "Failed to cancel order");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const fetchWishlist = useCallback(async () => {
     if (!token) {
@@ -301,6 +337,7 @@ export default function UserDashboard() {
             onViewOrders={() => setActiveTab("orders")}
             onViewWishlist={() => setActiveTab("wishlist")}
             onViewProducts={() => setActiveTab("products")}
+            onViewDetails={handleViewDetails}
           />
         )}
         {activeTab === "products" && (
@@ -315,7 +352,12 @@ export default function UserDashboard() {
           />
         )}
         {activeTab === "orders" && (
-          <OrdersTab orders={orders} loading={ordersLoading} error={ordersError} />
+          <OrdersTab
+            orders={orders}
+            loading={ordersLoading}
+            error={ordersError}
+            onViewDetails={handleViewDetails}
+          />
         )}
         {activeTab === "wishlist" && (
           <WishlistTab
@@ -337,6 +379,14 @@ export default function UserDashboard() {
         )}
         {activeTab === "account" && <AccountTab user={user} />}
       </main>
+      <OrderDetailModal
+        order={selectedOrder}
+        loading={orderDetailLoading}
+        error={orderDetailError}
+        onClose={() => setSelectedOrder(null)}
+        onCancel={handleCancelOrder}
+        cancelling={cancellingId !== null}
+      />
     </div>
   );
 }
@@ -359,6 +409,7 @@ function OverviewTab({
   onViewOrders,
   onViewWishlist,
   onViewProducts,
+  onViewDetails,
 }) {
   return (
     <section>
@@ -392,7 +443,7 @@ function OverviewTab({
         ) : orders.length === 0 ? (
           <p className="dashboard-message">No orders yet. Start shopping to see your purchases here.</p>
         ) : (
-          <OrderTable orders={orders.slice(0, 3)} />
+          <OrderTable orders={orders.slice(0, 3)} onViewDetails={onViewDetails} />
         )}
       </div>
 
@@ -448,7 +499,7 @@ function OverviewTab({
 }
 
 // ── Orders ────────────────────────────────────────────────────────
-function OrdersTab({ orders, loading, error }) {
+function OrdersTab({ orders, loading, error, onViewDetails }) {
   return (
     <section>
       <div className="page-header">
@@ -463,13 +514,13 @@ function OrdersTab({ orders, loading, error }) {
       ) : orders.length === 0 ? (
         <p className="dashboard-message">You haven't placed any orders yet.</p>
       ) : (
-        <OrderTable orders={orders} />
+        <OrderTable orders={orders} onViewDetails={onViewDetails} />
       )}
     </section>
   );
 }
 
-function OrderTable({ orders }) {
+function OrderTable({ orders, onViewDetails }) {
   return (
     <div className="order-table">
       <div className="order-table__head">
@@ -491,7 +542,7 @@ function OrderTable({ orders }) {
               {o.orderStatus}
             </span>
           </span>
-          <button className="btn-ghost btn-ghost--sm">
+          <button className="btn-ghost btn-ghost--sm" onClick={() => onViewDetails(o._id)}>
             Details <i className="ti ti-arrow-right" aria-hidden="true" />
           </button>
         </div>
@@ -995,5 +1046,165 @@ function AccountTab({ user }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function OrderDetailModal({ order, loading, error, onClose, onCancel, cancelling }) {
+  if (!order) return null;
+
+  const orderIdFormatted = `#ORD-${String(order._id).slice(-6).toUpperCase()}`;
+  const isCancelable = ["Pending", "Processing"].includes(order.orderStatus);
+
+  // Status mapping for visual timeline
+  const steps = [
+    { key: "Pending", label: "Ordered", icon: "ti-shopping-cart" },
+    { key: "Processing", label: "Processing", icon: "ti-settings" },
+    { key: "Shipped", label: "Shipped", icon: "ti-truck" },
+    { key: "Delivered", label: "Delivered", icon: "ti-package" },
+  ];
+
+  const getStepStatus = (stepKey) => {
+    if (order.orderStatus === "Cancelled") return "disabled";
+    const statusIndices = { Pending: 0, Processing: 1, Shipped: 2, Delivered: 3 };
+    const currentIdx = statusIndices[order.orderStatus] ?? -1;
+    const stepIdx = statusIndices[stepKey];
+    if (stepIdx < currentIdx) return "completed";
+    if (stepIdx === currentIdx) return "active";
+    return "pending";
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="order-modal" onClick={(e) => e.stopPropagation()}>
+        <header className="order-modal__header">
+          <div>
+            <h2>Order Details</h2>
+            <p className="order-modal__id">{orderIdFormatted}</p>
+          </div>
+          <button className="order-modal__close" onClick={onClose} aria-label="Close modal">
+            <i className="ti ti-x" />
+          </button>
+        </header>
+
+        {loading || order.loading ? (
+          <div className="order-modal__loading">
+            <p>Loading order details…</p>
+          </div>
+        ) : error ? (
+          <div className="order-modal__error">
+            <p>{error}</p>
+          </div>
+        ) : (
+          <div className="order-modal__body">
+            {/* Status Timeline */}
+            <div className="status-timeline-container">
+              {order.orderStatus === "Cancelled" ? (
+                <div className="cancelled-alert">
+                  <i className="ti ti-alert-triangle" />
+                  <div>
+                    <strong>This order has been cancelled</strong>
+                    <p>Restocked items and refunded successfully.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="status-timeline">
+                  {steps.map((step) => {
+                    const status = getStepStatus(step.key);
+                    return (
+                      <div key={step.key} className={`timeline-step ${status}`}>
+                        <div className="timeline-step__icon">
+                          <i className={`ti ${step.icon}`} />
+                          {status === "completed" && (
+                            <span className="timeline-step__check">
+                              <i className="ti ti-check" />
+                            </span>
+                          )}
+                        </div>
+                        <span className="timeline-step__label">{step.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Items Section */}
+            <div className="order-modal__section">
+              <h3>Items Ordered</h3>
+              <div className="order-modal__items">
+                {order.products?.map((item) => {
+                  const product = item.product || {};
+                  const image = product.images?.[0] || PLACEHOLDER_IMAGE;
+                  return (
+                    <div className="order-modal-item" key={item._id || item.product?._id}>
+                      <img src={image} alt={product.name} className="order-modal-item__img" />
+                      <div className="order-modal-item__info">
+                        <p className="order-modal-item__brand">{product.brand}</p>
+                        <p className="order-modal-item__name">{product.name || "Product"}</p>
+                        <p className="order-modal-item__qty">Qty: {item.quantity}</p>
+                      </div>
+                      <div className="order-modal-item__price-block">
+                        <p className="order-modal-item__price">{formatPrice(item.price)}</p>
+                        <p className="order-modal-item__total">{formatPrice(item.price * item.quantity)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Logistics & Payment */}
+            <div className="order-modal__grid">
+              <div className="order-modal__section">
+                <h3>Delivery Address</h3>
+                <div className="order-modal__info-card">
+                  <i className="ti ti-map-pin" />
+                  <p>{order.shippingAddress}</p>
+                </div>
+              </div>
+              <div className="order-modal__section">
+                <h3>Payment Info</h3>
+                <div className="order-modal__info-card">
+                  <i className="ti ti-credit-card" />
+                  <div>
+                    <p>Method: <strong>{order.paymentMethod}</strong></p>
+                    <p>Status: <span className="status-badge status--delivered">Paid</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Block */}
+            <div className="order-modal__summary">
+              <div className="order-modal__summary-row">
+                <span>Subtotal</span>
+                <span>{formatPrice(order.totalAmount)}</span>
+              </div>
+              <div className="order-modal__summary-row">
+                <span>Shipping</span>
+                <span className="cart__free">Free</span>
+              </div>
+              <div className="order-modal__summary-row total">
+                <span>Grand Total</span>
+                <span>{formatPrice(order.totalAmount)}</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            {isCancelable && (
+              <div className="order-modal__actions">
+                <button
+                  className="btn-ghost btn-danger"
+                  disabled={cancelling}
+                  onClick={() => onCancel(order._id)}
+                >
+                  {cancelling ? "Cancelling Order…" : "Cancel Order"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

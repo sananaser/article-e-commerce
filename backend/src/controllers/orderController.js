@@ -182,9 +182,51 @@ const updateOrderStatus = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Cancel order (user side)
+// @route   PUT /api/orders/:id/cancel
+// @access  Private
+const cancelOrder = asyncHandler(async (req, res, next) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    return next(new ErrorResponse(`Order not found with id of ${req.params.id}`, 404));
+  }
+
+  // Check if owner
+  if (order.user.toString() !== req.user._id.toString()) {
+    return next(new ErrorResponse("Not authorized to cancel this order", 403));
+  }
+
+  // Check if order is cancelable
+  if (order.orderStatus === "Cancelled") {
+    return next(new ErrorResponse("Order is already cancelled", 400));
+  }
+
+  if (["Shipped", "Delivered"].includes(order.orderStatus)) {
+    return next(new ErrorResponse(`Cannot cancel order after it has been ${order.orderStatus.toLowerCase()}`, 400));
+  }
+
+  // Return stock
+  for (const item of order.products) {
+    await Product.findByIdAndUpdate(item.product, {
+      $inc: { stock: item.quantity },
+    });
+  }
+
+  order.orderStatus = "Cancelled";
+  await order.save();
+
+  res.status(200).json({
+    success: true,
+    data: order,
+  });
+});
+
 module.exports = {
   createOrder,
   getMyOrders,
   getOrderById,
   updateOrderStatus,
+  cancelOrder,
 };
+
