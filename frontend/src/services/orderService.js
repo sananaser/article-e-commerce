@@ -6,6 +6,19 @@ const authHeaders = (token) => ({
   Authorization: `Bearer ${token}`,
 });
 
+export const getMyOrders = async (token) => {
+  const response = await fetch(`${ORDERS_URL}/myorders`, {
+    method: 'GET',
+    headers: authHeaders(token),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || data.message || 'Failed to fetch orders');
+  }
+  return data;
+};
+
 export const getOrders = async (token) => {
   const response = await fetch(ADMIN_ORDERS_URL, {
     method: 'GET',

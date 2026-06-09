@@ -1,84 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import {
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
+} from "../services/wishlistService";
+import { getMyOrders } from "../services/orderService";
+import { addToCart } from "../services/cartService";
+import { getProducts } from "../services/productService";
 import "./UserDashboard.css";
 
-// ── Dummy Data ───────────────────────────────────────────────────
-const user = {
-  name: "Priya Nair",
-  email: "priya.nair@gmail.com",
-  avatar: "PN",
-  memberSince: "January 2024",
-  tier: "Gold Member",
-};
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&q=80";
 
-const stats = [
-  { label: "Total Orders", value: "24", icon: "ti-shopping-bag" },
-  { label: "Wishlist Items", value: "12", icon: "ti-heart" },
-  { label: "Reward Points", value: "1,340", icon: "ti-star" },
-  { label: "Reviews Given", value: "8", icon: "ti-message" },
-];
+const getInitials = (name = "") =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "U";
 
-const recentOrders = [
-  {
-    id: "#ORD-8821",
-    date: "2 Jun 2026",
-    items: "Floral Wrap Dress, White Sneakers",
-    total: "₹2,199",
-    status: "Delivered",
-  },
-  {
-    id: "#ORD-8754",
-    date: "18 May 2026",
-    items: "Oversized Graphic Tee",
-    total: "₹799",
-    status: "Delivered",
-  },
-  {
-    id: "#ORD-8690",
-    date: "5 May 2026",
-    items: "Linen Co-ord Set",
-    total: "₹1,599",
-    status: "Returned",
-  },
-  {
-    id: "#ORD-8930",
-    date: "7 Jun 2026",
-    items: "Denim Jacket, Cargo Pants",
-    total: "₹3,499",
-    status: "In Transit",
-  },
-];
+const formatPrice = (price) => `₹${Number(price).toLocaleString("en-IN")}`;
 
-const wishlistItems = [
-  {
-    id: 1,
-    shopProductId: 2,
-    name: "Satin Slip Dress",
-    brand: "Studio",
-    price: "₹1,299",
-    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=200&q=80",
-    inStock: true,
-  },
-  {
-    id: 2,
-    shopProductId: 10,
-    name: "Boho Maxi Skirt",
-    brand: "Earthy Roots",
-    price: "₹899",
-    image: "https://images.unsplash.com/photo-1583744946564-b52ac1c389c8?w=200&q=80",
-    inStock: true,
-  },
-  {
-    id: 3,
-    shopProductId: 6,
-    name: "Knit Crop Cardigan",
-    brand: "Soft Knits",
-    price: "₹1,099",
-    image: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=200&q=80",
-    inStock: false,
-  },
-];
+const formatOrderDate = (dateStr) =>
+  new Date(dateStr).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+const formatOrderId = (id) => `#ORD-${String(id).slice(-6).toUpperCase()}`;
+
+const getOrderItemsLabel = (order) =>
+  order.products
+    ?.map((item) => {
+      const name = item.product?.name || "Product";
+      return item.quantity > 1 ? `${name} (×${item.quantity})` : name;
+    })
+    .join(", ") || "—";
 
 const addresses = [
   {
@@ -98,9 +60,10 @@ const addresses = [
 ];
 
 const statusColor = {
+  Pending: "status--transit",
+  Processing: "status--transit",
+  Shipped: "status--transit",
   Delivered: "status--delivered",
-  "In Transit": "status--transit",
-  Returned: "status--returned",
   Cancelled: "status--cancelled",
 };
 
@@ -109,16 +72,154 @@ export default function UserDashboard() {
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
-  const { logout } = useAuth();
+  const { logout, user, token } = useAuth();
   const navigate = useNavigate();
+
+  const [wishlistProducts, setWishlistProducts] = useState([]);
+  const [wishlistLoading, setWishlistLoading] = useState(true);
+  const [wishlistError, setWishlistError] = useState(null);
+
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [ordersError, setOrdersError] = useState(null);
+
+  const [catalogProducts, setCatalogProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState(null);
+
+  const fetchWishlist = useCallback(async () => {
+    if (!token) {
+      setWishlistProducts([]);
+      setWishlistLoading(false);
+      return;
+    }
+
+    setWishlistLoading(true);
+    setWishlistError(null);
+    try {
+      const res = await getWishlist(token);
+      setWishlistProducts(res.data?.products || []);
+    } catch (err) {
+      setWishlistError(err.message || "Failed to load wishlist");
+      setWishlistProducts([]);
+    } finally {
+      setWishlistLoading(false);
+    }
+  }, [token]);
+
+  const fetchOrders = useCallback(async () => {
+    if (!token) {
+      setOrders([]);
+      setOrdersLoading(false);
+      return;
+    }
+
+    setOrdersLoading(true);
+    setOrdersError(null);
+    try {
+      const res = await getMyOrders(token);
+      setOrders(res.data || []);
+    } catch (err) {
+      setOrdersError(err.message || "Failed to load orders");
+      setOrders([]);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [token]);
+
+  const fetchProducts = useCallback(async () => {
+    setProductsLoading(true);
+    setProductsError(null);
+    try {
+      const res = await getProducts({ limit: 50 });
+      setCatalogProducts(res.data || []);
+    } catch (err) {
+      setProductsError(err.message || "Failed to load products");
+      setCatalogProducts([]);
+    } finally {
+      setProductsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchWishlist();
+    fetchOrders();
+    fetchProducts();
+  }, [fetchWishlist, fetchOrders, fetchProducts]);
+
+  const handleRemoveFromWishlist = async (productId) => {
+    if (!token) return;
+    try {
+      const res = await removeFromWishlist(productId, token);
+      setWishlistProducts(res.data?.products || []);
+    } catch (err) {
+      setWishlistError(err.message || "Failed to remove item");
+    }
+  };
+
+  const handleAddToCart = async (productId) => {
+    if (!token) return;
+    try {
+      await addToCart(token, productId, 1);
+    } catch (err) {
+      setWishlistError(err.message || "Failed to add to cart");
+    }
+  };
+
+  const handleAddToWishlist = async (productId) => {
+    if (!token) return;
+    try {
+      const res = await addToWishlist(productId, token);
+      setWishlistProducts(res.data?.products || []);
+    } catch (err) {
+      setProductsError(err.message || "Failed to add to wishlist");
+    }
+  };
+
+  const wishlistIds = new Set(wishlistProducts.map((p) => p._id));
 
   const handleLogout = async () => {
     await logout();
     navigate("/login");
   };
 
+  const displayName = user?.name || "there";
+  const avatar = getInitials(user?.name);
+
+  const stats = [
+    {
+      label: "Total Orders",
+      value: ordersLoading ? "…" : String(orders.length),
+      icon: "ti-shopping-bag",
+    },
+    {
+      label: "Wishlist Items",
+      value: wishlistLoading ? "…" : String(wishlistProducts.length),
+      icon: "ti-heart",
+    },
+    {
+      label: "Delivered",
+      value: ordersLoading
+        ? "…"
+        : String(orders.filter((o) => o.orderStatus === "Delivered").length),
+      icon: "ti-package",
+    },
+    {
+      label: "In Progress",
+      value: ordersLoading
+        ? "…"
+        : String(
+            orders.filter((o) =>
+              ["Pending", "Processing", "Shipped"].includes(o.orderStatus)
+            ).length
+          ),
+      icon: "ti-truck-delivery",
+    },
+  ];
+
   const tabs = [
     { id: "overview", label: "Overview", icon: "ti-layout-dashboard" },
+    { id: "products", label: "Products", icon: "ti-shirt" },
     { id: "orders", label: "My Orders", icon: "ti-shopping-bag" },
     { id: "wishlist", label: "Wishlist", icon: "ti-heart" },
     { id: "addresses", label: "Addresses", icon: "ti-map-pin" },
@@ -130,11 +231,11 @@ export default function UserDashboard() {
       {/* Sidebar */}
       <aside className="dashboard__sidebar">
         <div className="sidebar__profile">
-          <div className="sidebar__avatar">{user.avatar}</div>
+          <div className="sidebar__avatar">{avatar}</div>
           <div>
-            <p className="sidebar__name">{user.name}</p>
+            <p className="sidebar__name">{user?.name || "User"}</p>
             <span className="sidebar__tier">
-              <i className="ti ti-star-filled" aria-hidden="true" /> {user.tier}
+              <i className="ti ti-star-filled" aria-hidden="true" /> Gold Member
             </span>
           </div>
         </div>
@@ -160,23 +261,78 @@ export default function UserDashboard() {
       {/* Main Content */}
       <main className="dashboard__main">
         {activeTab === "overview" && (
-          <OverviewTab onViewOrders={() => setActiveTab("orders")} onViewWishlist={() => setActiveTab("wishlist")} />
+          <OverviewTab
+            displayName={displayName}
+            stats={stats}
+            orders={orders}
+            ordersLoading={ordersLoading}
+            ordersError={ordersError}
+            products={wishlistProducts}
+            loading={wishlistLoading}
+            error={wishlistError}
+            onRemove={handleRemoveFromWishlist}
+            onAddToCart={handleAddToCart}
+            catalogProducts={catalogProducts}
+            catalogLoading={productsLoading}
+            catalogError={productsError}
+            onViewOrders={() => setActiveTab("orders")}
+            onViewWishlist={() => setActiveTab("wishlist")}
+            onViewProducts={() => setActiveTab("products")}
+          />
         )}
-        {activeTab === "orders" && <OrdersTab />}
-        {activeTab === "wishlist" && <WishlistTab />}
+        {activeTab === "products" && (
+          <ProductsTab
+            products={catalogProducts}
+            loading={productsLoading}
+            error={productsError}
+            wishlistIds={wishlistIds}
+            onAddToCart={handleAddToCart}
+            onAddToWishlist={handleAddToWishlist}
+            onRemoveFromWishlist={handleRemoveFromWishlist}
+          />
+        )}
+        {activeTab === "orders" && (
+          <OrdersTab orders={orders} loading={ordersLoading} error={ordersError} />
+        )}
+        {activeTab === "wishlist" && (
+          <WishlistTab
+            products={wishlistProducts}
+            loading={wishlistLoading}
+            error={wishlistError}
+            onRemove={handleRemoveFromWishlist}
+            onAddToCart={handleAddToCart}
+          />
+        )}
         {activeTab === "addresses" && <AddressesTab />}
-        {activeTab === "account" && <AccountTab />}
+        {activeTab === "account" && <AccountTab user={user} />}
       </main>
     </div>
   );
 }
 
 // ── Overview ──────────────────────────────────────────────────────
-function OverviewTab({ onViewOrders, onViewWishlist }) {
+function OverviewTab({
+  displayName,
+  stats,
+  orders,
+  ordersLoading,
+  ordersError,
+  products,
+  loading,
+  error,
+  catalogProducts,
+  catalogLoading,
+  catalogError,
+  onRemove,
+  onAddToCart,
+  onViewOrders,
+  onViewWishlist,
+  onViewProducts,
+}) {
   return (
     <section>
       <div className="page-header">
-        <h1 className="page-title">Welcome back, Priya 👋</h1>
+        <h1 className="page-title">Welcome back, {displayName.split(" ")[0]} 👋</h1>
         <p className="page-sub">Here's what's happening with your account</p>
       </div>
 
@@ -191,24 +347,44 @@ function OverviewTab({ onViewOrders, onViewWishlist }) {
         ))}
       </div>
 
-      {/* Points Banner */}
-      <div className="points-banner">
-        <div>
-          <p className="points-banner__title">🏅 Gold Member Perks Active</p>
-          <p className="points-banner__sub">
-            You have <strong>1,340 points</strong> — redeem for up to ₹670 off your next order.
-          </p>
-        </div>
-        <button className="btn-primary">Redeem Now</button>
-      </div>
-
       {/* Recent Orders */}
       <div className="section-block">
         <div className="section-block__header">
           <h2 className="section-title">Recent Orders</h2>
           <button className="btn-ghost" onClick={onViewOrders}>View All</button>
         </div>
-        <OrderTable orders={recentOrders.slice(0, 3)} />
+        {ordersError && (
+          <p className="dashboard-message dashboard-message--error">{ordersError}</p>
+        )}
+        {ordersLoading ? (
+          <p className="dashboard-message">Loading orders…</p>
+        ) : orders.length === 0 ? (
+          <p className="dashboard-message">No orders yet. Start shopping to see your purchases here.</p>
+        ) : (
+          <OrderTable orders={orders.slice(0, 3)} />
+        )}
+      </div>
+
+      {/* Products Peek */}
+      <div className="section-block">
+        <div className="section-block__header">
+          <h2 className="section-title">Shop Products</h2>
+          <button className="btn-ghost" onClick={onViewProducts}>View All</button>
+        </div>
+        {catalogError && (
+          <p className="dashboard-message dashboard-message--error">{catalogError}</p>
+        )}
+        {catalogLoading ? (
+          <p className="dashboard-message">Loading products…</p>
+        ) : catalogProducts.length === 0 ? (
+          <p className="dashboard-message">No products available yet. Check back soon.</p>
+        ) : (
+          <div className="wishlist-grid wishlist-grid--small">
+            {catalogProducts.slice(0, 4).map((product) => (
+              <CatalogProductCard product={product} key={product._id} compact onAddToCart={onAddToCart} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Wishlist Peek */}
@@ -217,25 +393,47 @@ function OverviewTab({ onViewOrders, onViewWishlist }) {
           <h2 className="section-title">Saved Items</h2>
           <button className="btn-ghost" onClick={onViewWishlist}>View Wishlist</button>
         </div>
-        <div className="wishlist-grid wishlist-grid--small">
-          {wishlistItems.map((item) => (
-            <WishlistCard item={item} key={item.id} compact />
-          ))}
-        </div>
+        {error && <p className="dashboard-message dashboard-message--error">{error}</p>}
+        {loading ? (
+          <p className="dashboard-message">Loading saved items…</p>
+        ) : products.length === 0 ? (
+          <p className="dashboard-message">No saved items yet. Browse the shop to add favourites.</p>
+        ) : (
+          <div className="wishlist-grid wishlist-grid--small">
+            {products.slice(0, 3).map((product) => (
+              <WishlistCard
+                product={product}
+                key={product._id}
+                compact
+                onRemove={onRemove}
+                onAddToCart={onAddToCart}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
 // ── Orders ────────────────────────────────────────────────────────
-function OrdersTab() {
+function OrdersTab({ orders, loading, error }) {
   return (
     <section>
       <div className="page-header">
         <h1 className="page-title">My Orders</h1>
-        <p className="page-sub">Track, return, or review your purchases</p>
+        <p className="page-sub">
+          {loading ? "Loading…" : `Track, return, or review your ${orders.length} purchase${orders.length === 1 ? "" : "s"}`}
+        </p>
       </div>
-      <OrderTable orders={recentOrders} />
+      {error && <p className="dashboard-message dashboard-message--error">{error}</p>}
+      {loading ? (
+        <p className="dashboard-message">Loading orders…</p>
+      ) : orders.length === 0 ? (
+        <p className="dashboard-message">You haven't placed any orders yet.</p>
+      ) : (
+        <OrderTable orders={orders} />
+      )}
     </section>
   );
 }
@@ -252,13 +450,15 @@ function OrderTable({ orders }) {
         <span></span>
       </div>
       {orders.map((o) => (
-        <div className="order-table__row" key={o.id}>
-          <span className="order-id">{o.id}</span>
-          <span className="order-date">{o.date}</span>
-          <span className="order-items">{o.items}</span>
-          <span className="order-total">{o.total}</span>
+        <div className="order-table__row" key={o._id}>
+          <span className="order-id">{formatOrderId(o._id)}</span>
+          <span className="order-date">{formatOrderDate(o.createdAt)}</span>
+          <span className="order-items">{getOrderItemsLabel(o)}</span>
+          <span className="order-total">{formatPrice(o.totalAmount)}</span>
           <span>
-            <span className={`status-badge ${statusColor[o.status]}`}>{o.status}</span>
+            <span className={`status-badge ${statusColor[o.orderStatus] || ""}`}>
+              {o.orderStatus}
+            </span>
           </span>
           <button className="btn-ghost btn-ghost--sm">
             Details <i className="ti ti-arrow-right" aria-hidden="true" />
@@ -269,28 +469,82 @@ function OrderTable({ orders }) {
   );
 }
 
-// ── Wishlist ──────────────────────────────────────────────────────
-function WishlistTab() {
+// ── Products ──────────────────────────────────────────────────────
+function ProductsTab({
+  products,
+  loading,
+  error,
+  wishlistIds,
+  onAddToCart,
+  onAddToWishlist,
+  onRemoveFromWishlist,
+}) {
   return (
     <section>
       <div className="page-header">
-        <h1 className="page-title">My Wishlist</h1>
-        <p className="page-sub">{wishlistItems.length} items saved</p>
+        <h1 className="page-title">Products</h1>
+        <p className="page-sub">
+          {loading ? "Loading…" : `Browse ${products.length} product${products.length === 1 ? "" : "s"}`}
+        </p>
       </div>
-      <div className="wishlist-grid">
-        {wishlistItems.map((item) => (
-          <WishlistCard item={item} key={item.id} />
-        ))}
-      </div>
+      {error && <p className="dashboard-message dashboard-message--error">{error}</p>}
+      {loading ? (
+        <p className="dashboard-message">Loading products…</p>
+      ) : products.length === 0 ? (
+        <p className="dashboard-message">No products available yet.</p>
+      ) : (
+        <div className="wishlist-grid">
+          {products.map((product) => (
+            <CatalogProductCard
+              product={product}
+              key={product._id}
+              isWishlisted={wishlistIds.has(product._id)}
+              onAddToCart={onAddToCart}
+              onToggleWishlist={() =>
+                wishlistIds.has(product._id)
+                  ? onRemoveFromWishlist(product._id)
+                  : onAddToWishlist(product._id)
+              }
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
-function WishlistCard({ item, compact }) {
+function CatalogProductCard({
+  product,
+  compact,
+  isWishlisted,
+  onAddToCart,
+  onToggleWishlist,
+}) {
   const navigate = useNavigate();
+  const [adding, setAdding] = useState(false);
+  const inStock = product.stock > 0;
+  const image = product.images?.[0] || PLACEHOLDER_IMAGE;
+  const categoryName =
+    typeof product.category === "object" ? product.category?.name : product.category;
 
   const goToProduct = () => {
-    navigate(`/shop?product=${item.shopProductId}`);
+    navigate(`/shop?product=${product._id}`);
+  };
+
+  const handleAddToCart = async (e) => {
+    e.stopPropagation();
+    if (!inStock || adding) return;
+    setAdding(true);
+    try {
+      await onAddToCart?.(product._id);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleWishlist = (e) => {
+    e.stopPropagation();
+    onToggleWishlist?.();
   };
 
   return (
@@ -301,26 +555,127 @@ function WishlistCard({ item, compact }) {
         onKeyDown={(e) => e.key === "Enter" && goToProduct()}
         role="button"
         tabIndex={0}
-        aria-label={`View ${item.name} in shop`}
+        aria-label={`View ${product.name} in shop`}
       >
-        <img src={item.image} alt={item.name} className="wishlist-card__img" />
-        {!item.inStock && <span className="wishlist-card__oos">Out of Stock</span>}
+        <img src={image} alt={product.name} className="wishlist-card__img" />
+        {!inStock && <span className="wishlist-card__oos">Out of Stock</span>}
+        {onToggleWishlist && (
+          <button
+            className={`wishlist-card__remove ${isWishlisted ? "wishlist-card__remove--active" : ""}`}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            onClick={handleWishlist}
+          >
+            <i className={isWishlisted ? "ti ti-heart-filled" : "ti ti-heart"} />
+          </button>
+        )}
+      </div>
+      <div className="wishlist-card__info">
+        <p className="wishlist-card__brand">{product.brand || categoryName}</p>
+        <button type="button" className="wishlist-card__name-btn" onClick={goToProduct}>
+          {product.name}
+        </button>
+        <p className="wishlist-card__price">{formatPrice(product.price)}</p>
+        <button
+          className={`btn-primary btn-primary--full ${!inStock ? "btn-disabled" : ""}`}
+          disabled={!inStock || adding}
+          onClick={handleAddToCart}
+        >
+          {adding ? "Adding…" : inStock ? "Add to Cart" : "Out of Stock"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Wishlist ──────────────────────────────────────────────────────
+function WishlistTab({ products, loading, error, onRemove, onAddToCart }) {
+  return (
+    <section>
+      <div className="page-header">
+        <h1 className="page-title">My Wishlist</h1>
+        <p className="page-sub">
+          {loading ? "Loading…" : `${products.length} item${products.length === 1 ? "" : "s"} saved`}
+        </p>
+      </div>
+      {error && <p className="dashboard-message dashboard-message--error">{error}</p>}
+      {loading ? (
+        <p className="dashboard-message">Loading wishlist…</p>
+      ) : products.length === 0 ? (
+        <p className="dashboard-message">Your wishlist is empty. Explore the shop to save products you love.</p>
+      ) : (
+        <div className="wishlist-grid">
+          {products.map((product) => (
+            <WishlistCard
+              product={product}
+              key={product._id}
+              onRemove={onRemove}
+              onAddToCart={onAddToCart}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function WishlistCard({ product, compact, onRemove, onAddToCart }) {
+  const navigate = useNavigate();
+  const [adding, setAdding] = useState(false);
+  const inStock = product.stock > 0;
+  const image = product.images?.[0] || PLACEHOLDER_IMAGE;
+
+  const goToProduct = () => {
+    navigate(`/shop?product=${product._id}`);
+  };
+
+  const handleRemove = (e) => {
+    e.stopPropagation();
+    onRemove?.(product._id);
+  };
+
+  const handleAddToCart = async (e) => {
+    e.stopPropagation();
+    if (!inStock || adding) return;
+    setAdding(true);
+    try {
+      await onAddToCart?.(product._id);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <div className={`wishlist-card ${compact ? "wishlist-card--compact" : ""}`}>
+      <div
+        className="wishlist-card__img-wrap wishlist-card__img-wrap--clickable"
+        onClick={goToProduct}
+        onKeyDown={(e) => e.key === "Enter" && goToProduct()}
+        role="button"
+        tabIndex={0}
+        aria-label={`View ${product.name} in shop`}
+      >
+        <img src={image} alt={product.name} className="wishlist-card__img" />
+        {!inStock && <span className="wishlist-card__oos">Out of Stock</span>}
         <button
           className="wishlist-card__remove"
           aria-label="Remove from wishlist"
-          onClick={(e) => e.stopPropagation()}
+          onClick={handleRemove}
         >
           <i className="ti ti-x" />
         </button>
       </div>
       <div className="wishlist-card__info">
-        <p className="wishlist-card__brand">{item.brand}</p>
+        <p className="wishlist-card__brand">{product.brand}</p>
         <button type="button" className="wishlist-card__name-btn" onClick={goToProduct}>
-          {item.name}
+          {product.name}
         </button>
-        <p className="wishlist-card__price">{item.price}</p>
-        <button className={`btn-primary btn-primary--full ${!item.inStock ? "btn-disabled" : ""}`} disabled={!item.inStock}>
-          {item.inStock ? "Add to Cart" : "Notify Me"}
+        <p className="wishlist-card__price">{formatPrice(product.price)}</p>
+        <button
+          className={`btn-primary btn-primary--full ${!inStock ? "btn-disabled" : ""}`}
+          disabled={!inStock || adding}
+          onClick={handleAddToCart}
+        >
+          {adding ? "Adding…" : inStock ? "Add to Cart" : "Out of Stock"}
         </button>
       </div>
     </div>
@@ -363,7 +718,7 @@ function AddressesTab() {
 }
 
 // ── Account ───────────────────────────────────────────────────────
-function AccountTab() {
+function AccountTab({ user }) {
   return (
     <section>
       <div className="page-header">
@@ -375,11 +730,11 @@ function AccountTab() {
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">Full Name</label>
-            <input className="form-input" defaultValue={user.name} />
+            <input className="form-input" defaultValue={user?.name || ""} />
           </div>
           <div className="form-group">
             <label className="form-label">Email Address</label>
-            <input className="form-input" defaultValue={user.email} />
+            <input className="form-input" defaultValue={user?.email || ""} />
           </div>
         </div>
         <div className="form-row">

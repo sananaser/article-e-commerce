@@ -385,6 +385,10 @@
   color: #e74c3c;
 }
 
+.wishlist-card__remove--active {
+  color: #e74c3c;
+}
+
 .wishlist-card__info {
   padding: 12px 14px;
 }
@@ -629,4 +633,14 @@
 .btn-danger:hover {
   background: rgba(192,57,43,0.05);
   border-color: #c0392b;
+}
+
+.dashboard-message {
+  color: #777;
+  font-size: 14px;
+  padding: 1rem 0;
+}
+
+.dashboard-message--error {
+  color: #c0392b;
 }

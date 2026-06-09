@@ -1,77 +1,126 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { getProducts } from "../services/productService";
+import { getCategories } from "../services/categoryService";
+import {
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
+} from "../services/wishlistService";
+import { addToCart } from "../services/cartService";
 import "./ShopPage.css";
 
-// ── Dummy Products ────────────────────────────────────────────────
-const ALL_PRODUCTS = [
-  // Dresses
-  { id: 1, name: "Floral Wrap Midi Dress", brand: "Studio", price: 1299, originalPrice: 1799, category: "Dresses", tag: "Bestseller", rating: 4.5, reviews: 210, image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80", colors: ["#F6C3B5","#A8D5BA","#B5C9F0"], sizes: ["XS","S","M","L","XL"] },
-  { id: 2, name: "Satin Slip Dress", brand: "Luxe Edit", price: 1499, originalPrice: 1999, category: "Dresses", tag: "New", rating: 4.3, reviews: 87, image: "https://images.unsplash.com/photo-1583744946564-b52ac1c389c8?w=400&q=80", colors: ["#E8D5C4","#1a1a1a","#C8A96E"], sizes: ["S","M","L"] },
-  { id: 3, name: "Boho Maxi Sundress", brand: "Earthy Roots", price: 999, originalPrice: 1299, category: "Dresses", tag: null, rating: 4.1, reviews: 142, image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&q=80", colors: ["#F5E6C8","#D4A5A5"], sizes: ["XS","S","M","L","XL","XXL"] },
-  { id: 4, name: "Co-ord Linen Set Dress", brand: "Minimal", price: 1799, originalPrice: 2299, category: "Dresses", tag: "Trending", rating: 4.7, reviews: 305, image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&q=80", colors: ["#EAE0D5","#7D9B76"], sizes: ["S","M","L","XL"] },
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80";
 
-  // Tops
-  { id: 5, name: "Oversized Graphic Tee", brand: "Drop Culture", price: 699, originalPrice: 899, category: "Tops", tag: "Bestseller", rating: 4.6, reviews: 519, image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400&q=80", colors: ["#fff","#1a1a1a","#C8A96E","#B5C9F0"], sizes: ["XS","S","M","L","XL","XXL"] },
-  { id: 6, name: "Knit Crop Cardigan", brand: "Soft Knits", price: 1099, originalPrice: 1399, category: "Tops", tag: "New", rating: 4.4, reviews: 93, image: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&q=80", colors: ["#F5E6C8","#D4A5A5","#1a1a1a"], sizes: ["S","M","L"] },
-  { id: 7, name: "Linen Button-Down Shirt", brand: "Minimal", price: 899, originalPrice: 1099, category: "Tops", tag: null, rating: 4.2, reviews: 174, image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80", colors: ["#fff","#7D9B76","#E8D5C4"], sizes: ["XS","S","M","L","XL"] },
-  { id: 8, name: "Ribbed Tank Top 2-Pack", brand: "Basic+", price: 599, originalPrice: 799, category: "Tops", tag: "Sale", rating: 4.0, reviews: 263, image: "https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=400&q=80", colors: ["#fff","#1a1a1a","#F6C3B5"], sizes: ["XS","S","M","L","XL"] },
-
-  // Bottoms
-  { id: 9, name: "High-Waist Wide Leg Jeans", brand: "Denim Lab", price: 1599, originalPrice: 1999, category: "Bottoms", tag: "Trending", rating: 4.5, reviews: 388, image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400&q=80", colors: ["#6D8DA8","#1a1a1a"], sizes: ["26","28","30","32","34"] },
-  { id: 10, name: "Boho Maxi Skirt", brand: "Earthy Roots", price: 899, originalPrice: 1199, category: "Bottoms", tag: null, rating: 4.3, reviews: 129, image: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400&q=80", colors: ["#E8D5C4","#7D9B76","#D4A5A5"], sizes: ["XS","S","M","L"] },
-  { id: 11, name: "Cargo Utility Trousers", brand: "Street Co.", price: 1299, originalPrice: 1699, category: "Bottoms", tag: "New", rating: 4.4, reviews: 201, image: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=400&q=80", colors: ["#8B8B6B","#1a1a1a","#C4A882"], sizes: ["XS","S","M","L","XL"] },
-  { id: 12, name: "Pleated Midi Skirt", brand: "Minimal", price: 999, originalPrice: 1299, category: "Bottoms", tag: "Bestseller", rating: 4.6, reviews: 347, image: "https://images.unsplash.com/photo-1577900232427-18219b9166a0?w=400&q=80", colors: ["#E8D5C4","#1a1a1a","#B5C9F0"], sizes: ["XS","S","M","L","XL"] },
-];
-
-const CATEGORIES = ["All", "Dresses", "Tops", "Bottoms"];
 const SORT_OPTIONS = [
-  { value: "popular", label: "Most Popular" },
-  { value: "newest", label: "Newest First" },
+  { value: "popular", label: "Newest First" },
   { value: "price-low", label: "Price: Low to High" },
   { value: "price-high", label: "Price: High to Low" },
-  { value: "rating", label: "Top Rated" },
 ];
+
+const getCategoryName = (product) =>
+  typeof product.category === "object" ? product.category?.name : "";
 
 // ── Component ────────────────────────────────────────────────────
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const highlightedId = Number(searchParams.get("product")) || null;
+  const highlightedId = searchParams.get("product") || null;
   const searchQuery = searchParams.get("search")?.toLowerCase() || "";
+  const { token } = useAuth();
 
+  const [allProducts, setAllProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("popular");
-  const [priceRange, setPriceRange] = useState(2000);
-  const [wishlist, setWishlist] = useState(new Set([1, 4]));
-  const [viewMode, setViewMode] = useState("grid"); // grid | list
+  const [priceRange, setPriceRange] = useState(5000);
+  const [maxPrice, setMaxPrice] = useState(5000);
+  const [wishlistIds, setWishlistIds] = useState(new Set());
+  const [viewMode, setViewMode] = useState("grid");
   const productRefs = useRef({});
 
-  const toggleWishlist = (id) => {
-    setWishlist((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [productsRes, categoriesRes] = await Promise.all([
+        getProducts({ limit: 100 }),
+        getCategories(),
+      ]);
+      const products = productsRes.data || [];
+      setAllProducts(products);
+      setCategories(categoriesRes.data || []);
+
+      const highest = products.reduce((max, p) => Math.max(max, p.price || 0), 0);
+      const ceiling = Math.max(highest, 500);
+      setMaxPrice(ceiling);
+      setPriceRange(ceiling);
+    } catch (err) {
+      setError(err.message || "Failed to load products");
+      setAllProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchWishlist = useCallback(async () => {
+    if (!token) {
+      setWishlistIds(new Set());
+      return;
+    }
+    try {
+      const res = await getWishlist(token);
+      const ids = new Set((res.data?.products || []).map((p) => p._id));
+      setWishlistIds(ids);
+    } catch {
+      setWishlistIds(new Set());
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
+
+  const categoryOptions = useMemo(
+    () => ["All", ...categories.map((c) => c.name)],
+    [categories]
+  );
 
   const products = useMemo(() => {
-    let list = ALL_PRODUCTS.filter((p) => {
-      if (category !== "All" && p.category !== category) return false;
+    let list = allProducts.filter((p) => {
+      if (category !== "All" && getCategoryName(p) !== category) return false;
       if (p.price > priceRange) return false;
-      if (searchQuery && !p.name.toLowerCase().includes(searchQuery) && !p.brand.toLowerCase().includes(searchQuery)) {
+      if (
+        searchQuery &&
+        !p.name.toLowerCase().includes(searchQuery) &&
+        !p.brand?.toLowerCase().includes(searchQuery)
+      ) {
         return false;
       }
       return true;
     });
 
     switch (sort) {
-      case "price-low": list = [...list].sort((a, b) => a.price - b.price); break;
-      case "price-high": list = [...list].sort((a, b) => b.price - a.price); break;
-      case "rating": list = [...list].sort((a, b) => b.rating - a.rating); break;
-      case "newest": list = [...list].sort((a, b) => b.id - a.id); break;
-      default: list = [...list].sort((a, b) => b.reviews - a.reviews);
+      case "price-low":
+        list = [...list].sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        list = [...list].sort((a, b) => b.price - a.price);
+        break;
+      default:
+        list = [...list].sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
     }
     return list;
-  }, [category, sort, priceRange, searchQuery]);
+  }, [allProducts, category, sort, priceRange, searchQuery]);
 
   useEffect(() => {
     if (!highlightedId) return;
@@ -87,17 +136,43 @@ export default function ShopPage() {
     setSearchParams(next, { replace: true });
   };
 
-  const discount = (p, o) => Math.round(((o - p) / o) * 100);
+  const toggleWishlist = async (productId) => {
+    if (!token) return;
+    try {
+      if (wishlistIds.has(productId)) {
+        const res = await removeFromWishlist(productId, token);
+        setWishlistIds(new Set((res.data?.products || []).map((p) => p._id)));
+      } else {
+        const res = await addToWishlist(productId, token);
+        setWishlistIds(new Set((res.data?.products || []).map((p) => p._id)));
+      }
+    } catch {
+      // silently ignore wishlist errors on shop page
+    }
+  };
+
+  const handleAddToCart = async (productId) => {
+    if (!token) return;
+    try {
+      await addToCart(token, productId, 1);
+    } catch {
+      // silently ignore cart errors on shop page
+    }
+  };
 
   return (
     <div className="shop">
-      {/* Top Bar */}
       <div className="shop__topbar">
         <div>
           <h1 className="shop__title">Women's Collection</h1>
           <p className="shop__meta">
-            {products.length} products
-            {searchQuery && <span className="shop__search-hint"> matching “{searchParams.get("search")}”</span>}
+            {loading ? "Loading…" : `${products.length} products`}
+            {searchQuery && (
+              <span className="shop__search-hint">
+                {" "}
+                matching “{searchParams.get("search")}”
+              </span>
+            )}
           </p>
         </div>
         <div className="shop__topbar-right">
@@ -123,19 +198,20 @@ export default function ShopPage() {
             onChange={(e) => setSort(e.target.value)}
           >
             {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
       </div>
 
       <div className="shop__body">
-        {/* Sidebar Filters */}
         <aside className="shop__filters">
           <div className="filter-block">
             <h3 className="filter-title">Category</h3>
             <div className="filter-pills">
-              {CATEGORIES.map((c) => (
+              {categoryOptions.map((c) => (
                 <button
                   key={c}
                   className={`filter-pill ${category === c ? "active" : ""}`}
@@ -149,68 +225,73 @@ export default function ShopPage() {
 
           <div className="filter-block">
             <h3 className="filter-title">
-              Price <span className="filter-value">Up to ₹{priceRange.toLocaleString()}</span>
+              Price{" "}
+              <span className="filter-value">
+                Up to ₹{priceRange.toLocaleString("en-IN")}
+              </span>
             </h3>
             <input
               type="range"
-              min={499}
-              max={2000}
+              min={100}
+              max={maxPrice}
               step={100}
               value={priceRange}
               onChange={(e) => setPriceRange(Number(e.target.value))}
               className="price-slider"
             />
             <div className="price-slider__range">
-              <span>₹499</span>
-              <span>₹2,000</span>
-            </div>
-          </div>
-
-          <div className="filter-block">
-            <h3 className="filter-title">Tags</h3>
-            <div className="filter-pills">
-              {["Bestseller", "New", "Trending", "Sale"].map((t) => (
-                <button key={t} className="filter-pill filter-pill--tag">{t}</button>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-block">
-            <h3 className="filter-title">Rating</h3>
-            <div className="rating-filters">
-              {[4.5, 4.0, 3.5].map((r) => (
-                <label key={r} className="rating-filter">
-                  <input type="checkbox" />
-                  <span className="rating-stars">{"★".repeat(Math.floor(r))}{"☆".repeat(5 - Math.floor(r))}</span>
-                  <span className="rating-label">{r}+</span>
-                </label>
-              ))}
+              <span>₹100</span>
+              <span>₹{maxPrice.toLocaleString("en-IN")}</span>
             </div>
           </div>
         </aside>
 
-        {/* Products Grid */}
-        <div className={`shop__products ${viewMode === "list" ? "shop__products--list" : ""}`}>
-          {products.length === 0 ? (
+        <div
+          className={`shop__products ${viewMode === "list" ? "shop__products--list" : ""}`}
+        >
+          {error && (
+            <div className="empty-state">
+              <i className="ti ti-alert-circle" />
+              <p>{error}</p>
+              <button className="btn-primary" onClick={fetchData}>
+                Retry
+              </button>
+            </div>
+          )}
+          {!error && loading ? (
+            <div className="empty-state">
+              <p>Loading products…</p>
+            </div>
+          ) : !error && products.length === 0 ? (
             <div className="empty-state">
               <i className="ti ti-mood-empty" />
               <p>No products match your filters.</p>
-              <button className="btn-primary" onClick={() => { setCategory("All"); setPriceRange(2000); }}>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setCategory("All");
+                  setPriceRange(maxPrice);
+                }}
+              >
                 Clear Filters
               </button>
             </div>
           ) : (
+            !error &&
             products.map((product) => (
               <ProductCard
-                key={product.id}
-                cardRef={(el) => { productRefs.current[product.id] = el; }}
+                key={product._id}
+                cardRef={(el) => {
+                  productRefs.current[product._id] = el;
+                }}
                 product={product}
-                isWishlisted={wishlist.has(product.id)}
-                onWishlist={() => toggleWishlist(product.id)}
-                discount={discount(product.price, product.originalPrice)}
+                isWishlisted={wishlistIds.has(product._id)}
+                onWishlist={() => toggleWishlist(product._id)}
+                onAddToCart={() => handleAddToCart(product._id)}
                 listMode={viewMode === "list"}
-                highlighted={highlightedId === product.id}
+                highlighted={highlightedId === product._id}
                 onClearHighlight={clearHighlight}
+                canInteract={!!token}
               />
             ))
           )}
@@ -221,11 +302,31 @@ export default function ShopPage() {
 }
 
 // ── Product Card ──────────────────────────────────────────────────
-const ProductCard = ({ product, isWishlisted, onWishlist, discount, listMode, highlighted, onClearHighlight, cardRef }) => {
-  const [hoveredColor, setHoveredColor] = useState(null);
+const ProductCard = ({
+  product,
+  isWishlisted,
+  onWishlist,
+  onAddToCart,
+  listMode,
+  highlighted,
+  onClearHighlight,
+  cardRef,
+  canInteract,
+}) => {
+  const [adding, setAdding] = useState(false);
+  const inStock = product.stock > 0;
+  const image = product.images?.[0] || PLACEHOLDER_IMAGE;
+  const categoryName = getCategoryName(product);
 
-  const stars = (rating) => {
-    return "★".repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? "½" : "") + "☆".repeat(5 - Math.ceil(rating));
+  const handleAddToCart = async (e) => {
+    e.stopPropagation();
+    if (!canInteract || !inStock || adding) return;
+    setAdding(true);
+    try {
+      await onAddToCart();
+    } finally {
+      setAdding(false);
+    }
   };
 
   return (
@@ -235,71 +336,53 @@ const ProductCard = ({ product, isWishlisted, onWishlist, discount, listMode, hi
       onClick={highlighted ? onClearHighlight : undefined}
     >
       <div className="product-card__img-wrap">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="product-card__img"
-        />
-        <button
-          className={`product-card__wishlist ${isWishlisted ? "active" : ""}`}
-          onClick={(e) => { e.stopPropagation(); onWishlist(); }}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-        >
-          <i className={isWishlisted ? "ti ti-heart-filled" : "ti ti-heart"} />
-        </button>
-        {product.tag && (
-          <span className={`product-card__tag tag--${product.tag.toLowerCase().replace(" ", "-")}`}>
-            {product.tag}
-          </span>
+        <img src={image} alt={product.name} className="product-card__img" />
+        {canInteract && (
+          <button
+            className={`product-card__wishlist ${isWishlisted ? "active" : ""}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onWishlist();
+            }}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <i className={isWishlisted ? "ti ti-heart-filled" : "ti ti-heart"} />
+          </button>
         )}
-        {discount > 0 && (
-          <span className="product-card__discount">-{discount}%</span>
+        {product.featured && (
+          <span className="product-card__tag tag--bestseller">Featured</span>
         )}
-        <div className="product-card__quick-add">
-          <button className="quick-add-btn">Quick Add</button>
-        </div>
+        {!inStock && <span className="product-card__discount">Sold Out</span>}
       </div>
 
       <div className="product-card__info">
-        <p className="product-card__brand">{product.brand}</p>
+        <p className="product-card__brand">{product.brand || categoryName}</p>
         <p className="product-card__name">{product.name}</p>
 
-        <div className="product-card__colors">
-          {product.colors.slice(0, 4).map((c, i) => (
-            <button
-              key={i}
-              className={`color-dot ${hoveredColor === i ? "active" : ""}`}
-              style={{ background: c, border: c === "#fff" ? "1px solid #ddd" : "none" }}
-              onMouseEnter={() => setHoveredColor(i)}
-              onMouseLeave={() => setHoveredColor(null)}
-              aria-label={`Color option ${i + 1}`}
-            />
-          ))}
-          {product.colors.length > 4 && (
-            <span className="color-more">+{product.colors.length - 4}</span>
-          )}
-        </div>
-
-        <div className="product-card__rating">
-          <span className="rating-stars-sm">{stars(product.rating)}</span>
-          <span className="rating-count">({product.reviews})</span>
-        </div>
-
         <div className="product-card__price-row">
-          <span className="product-card__price">₹{product.price.toLocaleString()}</span>
-          <span className="product-card__original">₹{product.originalPrice.toLocaleString()}</span>
+          <span className="product-card__price">
+            ₹{Number(product.price).toLocaleString("en-IN")}
+          </span>
         </div>
 
-        {listMode && (
-          <div className="product-card__sizes">
-            {product.sizes.map((s) => (
-              <span key={s} className="size-badge">{s}</span>
-            ))}
-          </div>
+        {listMode && product.description && (
+          <p className="product-card__desc">{product.description}</p>
         )}
 
-        <button className="product-card__add-btn">Add to Cart</button>
+        <button
+          className="product-card__add-btn"
+          disabled={!canInteract || !inStock || adding}
+          onClick={handleAddToCart}
+        >
+          {!canInteract
+            ? "Sign in to buy"
+            : adding
+              ? "Adding…"
+              : inStock
+                ? "Add to Cart"
+                : "Out of Stock"}
+        </button>
       </div>
     </div>
   );
-}
+};
