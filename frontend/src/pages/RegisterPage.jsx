@@ -92,7 +92,7 @@ const RegisterPage = () => {
   return (
     <AuthLayout 
       title="Create Account" 
-      subtitle="Join MODÉ for exclusive access"
+      subtitle="Join ARTICLE for exclusive access"
     >
       <form onSubmit={handleSubmit} className="auth-form">
         {errors.general && (

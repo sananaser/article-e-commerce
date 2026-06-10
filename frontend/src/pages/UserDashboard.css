@@ -1039,3 +1039,141 @@
     opacity: 1;
   }
 }
+
+/* ── Responsive Media Queries ── */
+@media (max-width: 992px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    flex-direction: column;
+  }
+
+  .dashboard__sidebar {
+    display: grid;
+    grid-template-areas: 
+      "profile logout"
+      "nav nav";
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    width: 100%;
+    height: auto;
+    position: static;
+    padding: 1.25rem 1rem;
+    box-sizing: border-box;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar__profile {
+    grid-area: profile;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .sidebar__nav {
+    grid-area: nav;
+    flex-direction: row;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    padding-bottom: 4px;
+  }
+
+  .sidebar__nav::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .sidebar__nav-item {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .sidebar__logout {
+    grid-area: logout;
+    margin-top: 0;
+    padding: 8px 12px;
+    align-self: center;
+    font-size: 13px;
+  }
+
+  .dashboard__main {
+    padding: 1.5rem 1rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .points-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .order-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .order-table__head,
+  .order-table__row {
+    min-width: 650px;
+  }
+
+  .wishlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .address-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .order-modal {
+    max-height: 95vh;
+    margin: 10px;
+  }
+
+  .order-modal__body {
+    padding: 1.25rem;
+  }
+
+  .order-modal__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .wishlist-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-timeline::before {
+    top: 15px;
+    left: 20px;
+    right: 20px;
+  }
+
+  .timeline-step__icon {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  .timeline-step__label {
+    font-size: 9px;
+  }
+}

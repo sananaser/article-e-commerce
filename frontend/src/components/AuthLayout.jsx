@@ -7,7 +7,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
       {/* Left side: Brand/Hero Banner */}
       <div className="auth-left">
         <div className="brand-overlay">
-          <h1 className="brand-logo">MODE</h1>
+          <h1 className="brand-logo">ARTICLE</h1>
           <p className="brand-tagline">Elevated Fashion</p>
         </div>
       </div>
