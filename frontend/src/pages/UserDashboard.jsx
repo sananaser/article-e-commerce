@@ -17,6 +17,7 @@ import {
   setDefaultAddress,
 } from "../services/addressService";
 import "./UserDashboard.css";
+import { getImageUrl } from "../config";
 
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&q=80";
@@ -605,7 +606,7 @@ function CatalogProductCard({
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
   const inStock = product.stock > 0;
-  const image = product.images?.[0] || PLACEHOLDER_IMAGE;
+  const image = getImageUrl(product.images?.[0]) || PLACEHOLDER_IMAGE;
   const categoryName =
     typeof product.category === "object" ? product.category?.name : product.category;
 
@@ -704,7 +705,7 @@ function WishlistCard({ product, compact, onRemove, onAddToCart }) {
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
   const inStock = product.stock > 0;
-  const image = product.images?.[0] || PLACEHOLDER_IMAGE;
+  const image = getImageUrl(product.images?.[0]) || PLACEHOLDER_IMAGE;
 
   const goToProduct = () => {
     navigate(`/shop?product=${product._id}`);
@@ -1134,7 +1135,7 @@ function OrderDetailModal({ order, loading, error, onClose, onCancel, cancelling
               <div className="order-modal__items">
                 {order.products?.map((item) => {
                   const product = item.product || {};
-                  const image = product.images?.[0] || PLACEHOLDER_IMAGE;
+                  const image = getImageUrl(product.images?.[0]) || PLACEHOLDER_IMAGE;
                   return (
                     <div className="order-modal-item" key={item._id || item.product?._id}>
                       <img src={image} alt={product.name} className="order-modal-item__img" />

@@ -9,6 +9,7 @@ import {
   uploadProductImages,
 } from '../../services/productService';
 import { getCategories } from '../../services/categoryService';
+import { getImageUrl } from '../../config';
 
 const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -326,7 +327,7 @@ export default function ProductsPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           {p.images?.[0] ? (
                             <img
-                              src={p.images[0]}
+                              src={getImageUrl(p.images[0])}
                               alt={p.name}
                               style={{
                                 width: 36,
@@ -498,7 +499,7 @@ export default function ProductsPage() {
                         {existingImages.map((src, idx) => (
                           <div key={`existing-${idx}`} style={{ position: 'relative' }}>
                             <img
-                              src={src}
+                              src={getImageUrl(src)}
                               alt={`Product ${idx + 1}`}
                               style={{ width: 72, height: 72, borderRadius: 8, objectFit: 'cover' }}
                             />
@@ -528,7 +529,7 @@ export default function ProductsPage() {
                         {imagePreviews.map((src, idx) => (
                           <div key={`new-${idx}`} style={{ position: 'relative' }}>
                             <img
-                              src={src}
+                              src={getImageUrl(src)}
                               alt={`New ${idx + 1}`}
                               style={{ width: 72, height: 72, borderRadius: 8, objectFit: 'cover' }}
                             />

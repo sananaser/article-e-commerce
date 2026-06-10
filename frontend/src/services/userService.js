@@ -1,4 +1,6 @@
-const BASE_URL = '/api/admin/users';
+import { API_BASE_URL } from '../config';
+
+const BASE_URL = `${API_BASE_URL}/api/admin/users`;
 
 /**
  * Fetch all users from the backend (admin only)

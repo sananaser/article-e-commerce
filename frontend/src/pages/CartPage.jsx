@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { createOrder } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
 import { getAddresses, addAddress } from '../services/addressService';
+import { getImageUrl } from '../config';
 import './CartPage.css';
 
 const PLACEHOLDER_IMAGE =
@@ -201,7 +202,7 @@ export default function CartPage() {
         <div className="cart__body">
           <div className="cart__items">
             {items.map(({ product, quantity }) => {
-              const image = product?.images?.[0] || PLACEHOLDER_IMAGE;
+              const image = getImageUrl(product?.images?.[0]) || PLACEHOLDER_IMAGE;
               const inStock = product?.stock > 0;
               const lineTotal = (product?.price || 0) * quantity;
               const isUpdating = updatingId === product._id;

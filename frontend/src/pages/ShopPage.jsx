@@ -9,6 +9,7 @@ import {
   addToWishlist,
   removeFromWishlist,
 } from "../services/wishlistService";
+import { getImageUrl } from "../config";
 import "./ShopPage.css";
 
 const PLACEHOLDER_IMAGE =
@@ -322,7 +323,7 @@ const ProductCard = ({
 }) => {
   const [adding, setAdding] = useState(false);
   const inStock = product.stock > 0;
-  const image = product.images?.[0] || PLACEHOLDER_IMAGE;
+  const image = getImageUrl(product.images?.[0]) || PLACEHOLDER_IMAGE;
   const categoryName = getCategoryName(product);
 
   const handleAddToCart = async (e) => {

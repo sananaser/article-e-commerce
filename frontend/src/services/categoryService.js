@@ -1,4 +1,6 @@
-const BASE_URL = '/api/categories';
+import { API_BASE_URL } from '../config';
+
+const BASE_URL = `${API_BASE_URL}/api/categories`;
 
 const authHeaders = (token) => ({
   'Content-Type': 'application/json',

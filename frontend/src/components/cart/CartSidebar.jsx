@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { getImageUrl } from '../../config';
 import './CartSidebar.css';
 
 const PLACEHOLDER_IMAGE =
@@ -45,7 +46,7 @@ export default function CartSidebar() {
           ) : (
             <ul className="cart-sidebar__list">
               {items.map(({ product, quantity }) => {
-                const image = product?.images?.[0] || PLACEHOLDER_IMAGE;
+                const image = getImageUrl(product?.images?.[0]) || PLACEHOLDER_IMAGE;
                 return (
                   <li className="cart-sidebar__item" key={product._id}>
                     <img src={image} alt={product.name} className="cart-sidebar__item-img" />

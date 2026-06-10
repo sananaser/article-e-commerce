@@ -1,4 +1,6 @@
-const BASE_URL = '/api/products';
+import { API_BASE_URL } from '../config';
+
+const BASE_URL = `${API_BASE_URL}/api/products`;
 
 /**
  * Fetch all products with optional filters

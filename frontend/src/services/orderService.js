@@ -1,5 +1,7 @@
-const ADMIN_ORDERS_URL = '/api/admin/orders';
-const ORDERS_URL = '/api/orders';
+import { API_BASE_URL } from '../config';
+
+const ADMIN_ORDERS_URL = `${API_BASE_URL}/api/admin/orders`;
+const ORDERS_URL = `${API_BASE_URL}/api/orders`;
 
 const authHeaders = (token) => ({
   'Content-Type': 'application/json',

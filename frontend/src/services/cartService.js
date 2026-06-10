@@ -1,4 +1,6 @@
-const BASE_URL = '/api/cart';
+import { API_BASE_URL } from '../config';
+
+const BASE_URL = `${API_BASE_URL}/api/cart`;
 
 const authHeaders = (token) => ({
   'Content-Type': 'application/json',
