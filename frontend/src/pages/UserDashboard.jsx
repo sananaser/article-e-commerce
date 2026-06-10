@@ -268,10 +268,10 @@ export default function UserDashboard() {
       value: ordersLoading
         ? "…"
         : String(
-            orders.filter((o) =>
-              ["Pending", "Processing", "Shipped"].includes(o.orderStatus)
-            ).length
-          ),
+          orders.filter((o) =>
+            ["Pending", "Processing", "Shipped"].includes(o.orderStatus)
+          ).length
+        ),
       icon: "ti-truck-delivery",
     },
   ];
