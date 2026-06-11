@@ -1,5 +1,5 @@
-const express = require("express");
 const path = require("path");
+const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const { rateLimit } = require("express-rate-limit");
@@ -7,22 +7,23 @@ const errorHandler = require("./middleware/errorMiddleware");
 
 const app = express();
 
+// Serve static files for legacy uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
 // Set security HTTP headers
 app.use(helmet());
-
+//process.env.FRONTEND_URL
+ // "http://localhost:5173"
 // Enable CORS
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   })
 );
 
 // Body parser
 app.use(express.json());
-
-// Serve uploaded product images
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Rate limiting configuration
 const limiter = rateLimit({

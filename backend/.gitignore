@@ -1,3 +1,4 @@
 .env
 uploads/products/*
 !uploads/products/.gitkeep
+node_modules/
