@@ -175,58 +175,114 @@ export default function OrdersPage() {
             </p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Items</th>
-                  <th>Amount</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((o) => (
-                  <tr key={o._id}>
-                    <td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((o) => (
+                    <tr key={o._id}>
+                      <td>
+                        <code style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
+                          {o.id}
+                        </code>
+                      </td>
+                      <td className="col-name">{o.customer}</td>
+                      <td style={{ color: '#9ca3af' }}>{o.items} {o.items === 1 ? 'item' : 'items'}</td>
+                      <td style={{ color: '#f3f4f6', fontWeight: 600 }}>₹{o.amount.toLocaleString()}</td>
+                      <td style={{ color: '#9ca3af', fontSize: 13 }}>{o.date}</td>
+                      <td>
+                        <span className={`badge ${statusBadge[o.status] || 'badge-gray'}`}>
+                          {o.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="btn btn-ghost btn-sm" onClick={() => openDetail(o)}>
+                            <EyeIcon /> View
+                          </button>
+                          {o.status !== 'Delivered' && o.status !== 'Cancelled' && (
+                            <button
+                              className="btn btn-primary btn-sm"
+                              id={`btn-advance-${o._id}`}
+                              onClick={() => advanceStatus(o)}
+                              disabled={updating}
+                            >
+                              → {statusNext[o.status]}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="md:hidden divide-y divide-[rgba(255,255,255,0.05)]">
+              {filtered.map((o) => (
+                <div key={o._id} className="p-4 flex flex-col gap-4">
+                  {/* Order Header */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
                       <code style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
                         {o.id}
                       </code>
-                    </td>
-                    <td className="col-name">{o.customer}</td>
-                    <td style={{ color: '#9ca3af' }}>{o.items} {o.items === 1 ? 'item' : 'items'}</td>
-                    <td style={{ color: '#f3f4f6', fontWeight: 600 }}>₹{o.amount.toLocaleString()}</td>
-                    <td style={{ color: '#9ca3af', fontSize: 13 }}>{o.date}</td>
-                    <td>
-                      <span className={`badge ${statusBadge[o.status] || 'badge-gray'}`}>
-                        {o.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="btn btn-ghost btn-sm" onClick={() => openDetail(o)}>
-                          <EyeIcon /> View
-                        </button>
-                        {o.status !== 'Delivered' && o.status !== 'Cancelled' && (
-                          <button
-                            className="btn btn-primary btn-sm"
-                            id={`btn-advance-${o._id}`}
-                            onClick={() => advanceStatus(o)}
-                            disabled={updating}
-                          >
-                            → {statusNext[o.status]}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <h3 className="text-white font-semibold text-base mt-1.5 leading-snug break-words">{o.customer}</h3>
+                    </div>
+                    <span className={`badge ${statusBadge[o.status] || 'badge-gray'}`}>
+                      {o.status}
+                    </span>
+                  </div>
+
+                  {/* Order Details */}
+                  <div className="grid grid-cols-3 gap-2 text-xs bg-black/15 p-3 rounded-lg border border-white/5">
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Items</span>
+                      <span className="text-gray-200 font-semibold">{o.items} {o.items === 1 ? 'item' : 'items'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Amount</span>
+                      <span className="text-[#a78bfa] font-bold">₹{o.amount.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Date</span>
+                      <span className="text-gray-200 font-semibold">{o.date}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3">
+                    <button className="btn btn-ghost btn-sm flex-1 justify-center py-2" onClick={() => openDetail(o)}>
+                      <EyeIcon /> View
+                    </button>
+                    {o.status !== 'Delivered' && o.status !== 'Cancelled' && (
+                      <button
+                        className="btn btn-primary btn-sm flex-1 justify-center py-2"
+                        id={`btn-advance-mobile-${o._id}`}
+                        onClick={() => advanceStatus(o)}
+                        disabled={updating}
+                      >
+                        → {statusNext[o.status]}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

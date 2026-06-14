@@ -168,47 +168,96 @@ export default function CategoriesPage() {
             </p>
           </div>
         ) : (
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Slug</th>
-                <th>Products</th>
-                <th>Created</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Products</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((cat, i) => (
+                    <tr key={cat._id}>
+                      <td style={{ color: '#6b7280', fontSize: 13 }}>{i + 1}</td>
+                      <td className="col-name">{cat.name}</td>
+                      <td>
+                        <code style={{ background: 'rgba(255,255,255,0.05)', color: '#9ca3af', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
+                          {cat.slug}
+                        </code>
+                      </td>
+                      <td>
+                        <span className="badge badge-blue">
+                          {cat.productCount ?? 0} items
+                        </span>
+                      </td>
+                      <td>{formatDate(cat.createdAt)}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="btn btn-ghost btn-sm" onClick={() => openEdit(cat)}>
+                            <EditIcon /> Edit
+                          </button>
+                          <button className="btn btn-danger btn-sm" onClick={() => openDelete(cat)}>
+                            <TrashIcon /> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="md:hidden divide-y divide-[rgba(255,255,255,0.05)]">
               {filtered.map((cat, i) => (
-                <tr key={cat._id}>
-                  <td style={{ color: '#6b7280', fontSize: 13 }}>{i + 1}</td>
-                  <td className="col-name">{cat.name}</td>
-                  <td>
-                    <code style={{ background: 'rgba(255,255,255,0.05)', color: '#9ca3af', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
-                      {cat.slug}
-                    </code>
-                  </td>
-                  <td>
-                    <span className="badge badge-blue">
-                      {cat.productCount ?? 0} items
-                    </span>
-                  </td>
-                  <td>{formatDate(cat.createdAt)}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(cat)}>
-                        <EditIcon /> Edit
-                      </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => openDelete(cat)}>
-                        <TrashIcon /> Delete
-                      </button>
+                <div key={cat._id} className="p-4 flex flex-col gap-4">
+                  {/* Category Header */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">#{i + 1}</span>
+                        <span className="badge badge-blue">
+                          {cat.productCount ?? 0} items
+                        </span>
+                      </div>
+                      <h3 className="text-white font-semibold text-base mt-1 leading-snug break-words">{cat.name}</h3>
                     </div>
-                  </td>
-                </tr>
+                  </div>
+
+                  {/* Category Details */}
+                  <div className="grid grid-cols-2 gap-4 text-xs bg-black/15 p-3 rounded-lg border border-white/5">
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Slug</span>
+                      <code style={{ background: 'rgba(255,255,255,0.05)', color: '#9ca3af', padding: '2px 8px', borderRadius: 5, fontSize: 11 }}>
+                        {cat.slug}
+                      </code>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Created</span>
+                      <span className="text-gray-200 font-semibold">{formatDate(cat.createdAt)}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3">
+                    <button className="btn btn-ghost btn-sm flex-1 justify-center py-2" onClick={() => openEdit(cat)}>
+                      <EditIcon /> Edit
+                    </button>
+                    <button className="btn btn-danger btn-sm flex-1 justify-center py-2" onClick={() => openDelete(cat)}>
+                      <TrashIcon /> Delete
+                    </button>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
 

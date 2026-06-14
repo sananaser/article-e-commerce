@@ -101,69 +101,133 @@ export default function UsersPage() {
             <p className="empty-state-text">No users found</p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Orders</th>
-                  <th>Joined</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((u, i) => (
-                  <tr key={u._id}>
-                    <td style={{ color: '#6b7280', fontSize: 13 }}>{i + 1}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{
-                          width: 34, height: 34, borderRadius: '50%',
-                          background: u.role === 'admin'
-                            ? 'linear-gradient(135deg, #f59e0b, #ef4444)'
-                            : 'linear-gradient(135deg, #7c3aed, #6366f1)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
-                        }}>
-                          {u.name ? u.name[0].toUpperCase() : '?'}
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Orders</th>
+                    <th>Joined</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((u, i) => (
+                    <tr key={u._id}>
+                      <td style={{ color: '#6b7280', fontSize: 13 }}>{i + 1}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{
+                            width: 34, height: 34, borderRadius: '50%',
+                            background: u.role === 'admin'
+                              ? 'linear-gradient(135deg, #f59e0b, #ef4444)'
+                              : 'linear-gradient(135deg, #7c3aed, #6366f1)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
+                          }}>
+                            {u.name ? u.name[0].toUpperCase() : '?'}
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, fontWeight: 600, color: '#f3f4f6', fontSize: 14 }}>{u.name}</p>
+                            <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>{u.email}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p style={{ margin: 0, fontWeight: 600, color: '#f3f4f6', fontSize: 14 }}>{u.name}</p>
-                          <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>{u.email}</p>
+                      </td>
+                      <td>
+                        <span className={`badge ${u.role === 'admin' ? 'badge-yellow' : 'badge-blue'}`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td style={{ color: '#9ca3af' }}>{u.orders}</td>
+                      <td style={{ color: '#9ca3af', fontSize: 13 }}>{u.joined}</td>
+                      <td>
+                        <span className={`badge ${u.status === 'Active' ? 'badge-green' : 'badge-red'}`}>
+                          {u.status}
+                        </span>
+                      </td>
+                      <td>
+                        {u.role !== 'admin' && (
+                          <button
+                            className={`btn btn-sm ${u.status === 'Active' ? 'btn-danger' : 'btn-ghost'}`}
+                            onClick={() => toggleBlock(u._id)}
+                            id={`btn-toggle-user-${u._id}`}
+                          >
+                            {u.status === 'Active' ? <><BlockIcon /> Block</> : <><UnblockIcon /> Unblock</>}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="md:hidden divide-y divide-[rgba(255,255,255,0.05)]">
+              {filtered.map((u, i) => (
+                <div key={u._id} className="p-4 flex flex-col gap-4">
+                  {/* User Header */}
+                  <div className="flex items-start gap-4">
+                    <div style={{
+                      width: 40, height: 40, borderRadius: '50%',
+                      background: u.role === 'admin'
+                        ? 'linear-gradient(135deg, #f59e0b, #ef4444)'
+                        : 'linear-gradient(135deg, #7c3aed, #6366f1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 16, fontWeight: 700, color: '#fff', flexShrink: 0,
+                    }}>
+                      {u.name ? u.name[0].toUpperCase() : '?'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">#{i + 1}</span>
+                        <div className="flex gap-1.5">
+                          <span className={`badge ${u.role === 'admin' ? 'badge-yellow' : 'badge-blue'}`}>
+                            {u.role}
+                          </span>
+                          <span className={`badge ${u.status === 'Active' ? 'badge-green' : 'badge-red'}`}>
+                            {u.status}
+                          </span>
                         </div>
                       </div>
-                    </td>
-                    <td>
-                      <span className={`badge ${u.role === 'admin' ? 'badge-yellow' : 'badge-blue'}`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td style={{ color: '#9ca3af' }}>{u.orders}</td>
-                    <td style={{ color: '#9ca3af', fontSize: 13 }}>{u.joined}</td>
-                    <td>
-                      <span className={`badge ${u.status === 'Active' ? 'badge-green' : 'badge-red'}`}>
-                        {u.status}
-                      </span>
-                    </td>
-                    <td>
-                      {u.role !== 'admin' && (
-                        <button
-                          className={`btn btn-sm ${u.status === 'Active' ? 'btn-danger' : 'btn-ghost'}`}
-                          onClick={() => toggleBlock(u._id)}
-                          id={`btn-toggle-user-${u._id}`}
-                        >
-                          {u.status === 'Active' ? <><BlockIcon /> Block</> : <><UnblockIcon /> Unblock</>}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <h3 className="text-white font-semibold text-base mt-0.5 leading-snug break-words">{u.name}</h3>
+                      <p className="text-gray-400 text-xs mt-0.5 break-all">{u.email}</p>
+                    </div>
+                  </div>
+
+                  {/* Stacked Details */}
+                  <div className="grid grid-cols-2 gap-4 text-xs bg-black/15 p-3 rounded-lg border border-white/5">
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Orders</span>
+                      <span className="text-gray-200 font-semibold">{u.orders}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Joined</span>
+                      <span className="text-gray-200 font-semibold">{u.joined}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  {u.role !== 'admin' && (
+                    <div>
+                      <button
+                        className={`btn btn-sm w-full justify-center py-2 ${u.status === 'Active' ? 'btn-danger' : 'btn-ghost'}`}
+                        onClick={() => toggleBlock(u._id)}
+                        id={`btn-toggle-user-mobile-${u._id}`}
+                      >
+                        {u.status === 'Active' ? <><BlockIcon /> Block</> : <><UnblockIcon /> Unblock</>}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
