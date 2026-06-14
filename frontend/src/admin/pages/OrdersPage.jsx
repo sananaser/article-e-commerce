@@ -248,17 +248,17 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Order Details */}
-                  <div className="grid grid-cols-3 gap-2 text-xs bg-black/15 p-3 rounded-lg border border-white/5">
-                    <div>
-                      <span className="text-gray-500 block mb-0.5">Items</span>
+                  <div className="space-y-2.5 text-xs bg-black/15 p-3.5 rounded-lg border border-white/5">
+                    <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
+                      <span className="text-gray-400">Items</span>
                       <span className="text-gray-200 font-semibold">{o.items} {o.items === 1 ? 'item' : 'items'}</span>
                     </div>
-                    <div>
-                      <span className="text-gray-500 block mb-0.5">Amount</span>
+                    <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
+                      <span className="text-gray-400">Amount</span>
                       <span className="text-[#a78bfa] font-bold">₹{o.amount.toLocaleString()}</span>
                     </div>
-                    <div>
-                      <span className="text-gray-500 block mb-0.5">Date</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Date</span>
                       <span className="text-gray-200 font-semibold">{o.date}</span>
                     </div>
                   </div>

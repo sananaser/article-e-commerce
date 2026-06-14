@@ -200,14 +200,14 @@ export default function UsersPage() {
                     </div>
                   </div>
 
-                  {/* Stacked Details */}
-                  <div className="grid grid-cols-2 gap-4 text-xs bg-black/15 p-3 rounded-lg border border-white/5">
-                    <div>
-                      <span className="text-gray-500 block mb-0.5">Orders</span>
+                  {/* Key-Value Details */}
+                  <div className="space-y-2.5 text-xs bg-black/15 p-3.5 rounded-lg border border-white/5">
+                    <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
+                      <span className="text-gray-400">Orders</span>
                       <span className="text-gray-200 font-semibold">{u.orders}</span>
                     </div>
-                    <div>
-                      <span className="text-gray-500 block mb-0.5">Joined</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Joined</span>
                       <span className="text-gray-200 font-semibold">{u.joined}</span>
                     </div>
                   </div>

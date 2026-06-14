@@ -420,19 +420,19 @@ export default function ProductsPage() {
                       </div>
                     </div>
 
-                    {/* Stacked Fields Details */}
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs bg-black/15 p-3 rounded-lg border border-white/5">
-                      <div>
-                        <span className="text-gray-500 block mb-0.5">Category</span>
-                        <span className="badge badge-gray inline-block">{getCategoryName(p) || '—'}</span>
+                     {/* Key-Value Details */}
+                    <div className="space-y-2.5 text-xs bg-black/15 p-3.5 rounded-lg border border-white/5">
+                      <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
+                        <span className="text-gray-400">Category</span>
+                        <span className="badge badge-gray">{getCategoryName(p) || '—'}</span>
                       </div>
-                      <div>
-                        <span className="text-gray-500 block mb-0.5">Price</span>
-                        <span className="text-[#a78bfa] text-sm font-bold">₹{p.price.toLocaleString()}</span>
+                      <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
+                        <span className="text-gray-400">Price</span>
+                        <span className="text-[#a78bfa] font-bold text-sm">₹{p.price.toLocaleString()}</span>
                       </div>
-                      <div className="col-span-2">
-                        <span className="text-gray-500 block mb-0.5">Stock</span>
-                        <span className={`badge ${stockBadge(p.stock)} inline-block`}>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Stock</span>
+                        <span className={`badge ${stockBadge(p.stock)}`}>
                           {p.stock === 0 ? 'Out of stock' : `${p.stock} left`}
                         </span>
                       </div>

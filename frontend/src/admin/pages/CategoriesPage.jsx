@@ -232,15 +232,15 @@ export default function CategoriesPage() {
                   </div>
 
                   {/* Category Details */}
-                  <div className="grid grid-cols-2 gap-4 text-xs bg-black/15 p-3 rounded-lg border border-white/5">
-                    <div>
-                      <span className="text-gray-500 block mb-0.5">Slug</span>
+                  <div className="space-y-2.5 text-xs bg-black/15 p-3.5 rounded-lg border border-white/5">
+                    <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
+                      <span className="text-gray-400">Slug</span>
                       <code style={{ background: 'rgba(255,255,255,0.05)', color: '#9ca3af', padding: '2px 8px', borderRadius: 5, fontSize: 11 }}>
                         {cat.slug}
                       </code>
                     </div>
-                    <div>
-                      <span className="text-gray-500 block mb-0.5">Created</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Created</span>
                       <span className="text-gray-200 font-semibold">{formatDate(cat.createdAt)}</span>
                     </div>
                   </div>
