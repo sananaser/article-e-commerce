@@ -296,6 +296,7 @@
 
   .admin-content {
     padding: 16px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 }
 

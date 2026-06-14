@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './AdminLayout.css';
+import MobileFooterNav from './components/MobileFooterNav';
 
 const NAV_ITEMS = [
   {
@@ -105,6 +106,9 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* ── Mobile Footer Navigation ── */}
+      <MobileFooterNav />
     </div>
   );
 }

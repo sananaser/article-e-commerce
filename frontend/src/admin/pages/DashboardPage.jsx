@@ -3,6 +3,7 @@ import '../AdminLayout.css';
 import { useAuth } from '../../context/AuthContext';
 import OrdersOverviewChart, { buildWeeklyData } from '../components/OrdersOverviewChart';
 import RevenueChart, { buildMonthlyRevenue } from '../components/RevenueChart';
+import { API_BASE_URL } from '../../config';
 
 /* ── helpers ──────────────────────────────────────────────── */
 const formatOrderId = (id) => `#ORD-${String(id).slice(-6).toUpperCase()}`;
@@ -39,9 +40,9 @@ export default function DashboardPage() {
 
     // fetch in parallel
     const [statsRes, ordersRes] = await Promise.allSettled([
-      fetch('/api/admin/dashboard', { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${API_BASE_URL}/api/admin/dashboard`, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json()),
-      fetch('/api/admin/orders', { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`${API_BASE_URL}/api/admin/orders`, { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json()),
     ]);
 
