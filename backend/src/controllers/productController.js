@@ -116,13 +116,19 @@ const getProducts = asyncHandler(async (req, res, next) => {
   }
 
   // Pagination
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  let limit = parseInt(req.query.limit, 10);
+  if (isNaN(limit) || limit < 0) {
+    limit = 10; // Default limit
+  }
+
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
   const total = await Product.countDocuments(queryObj);
 
-  query = query.skip(startIndex).limit(limit);
+  if (limit > 0) {
+    query = query.skip(startIndex).limit(limit);
+  }
 
   // Executing query
   const products = await query;
@@ -130,18 +136,20 @@ const getProducts = asyncHandler(async (req, res, next) => {
   // Pagination result
   const pagination = {};
 
-  if (endIndex < total) {
-    pagination.next = {
-      page: page + 1,
-      limit,
-    };
-  }
+  if (limit > 0) {
+    if (endIndex < total) {
+      pagination.next = {
+        page: page + 1,
+        limit,
+      };
+    }
 
-  if (startIndex > 0) {
-    pagination.prev = {
-      page: page - 1,
-      limit,
-    };
+    if (startIndex > 0) {
+      pagination.prev = {
+        page: page - 1,
+        limit,
+      };
+    }
   }
 
   res.status(200).json({
