@@ -303,89 +303,155 @@ export default function ProductsPage() {
             </p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Brand</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p, i) => {
-                  const status = productStatus(p.stock);
-                  return (
-                    <tr key={p._id}>
-                      <td style={{ color: '#6b7280', fontSize: 13 }}>{i + 1}</td>
-                      <td className="col-name">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          {p.images?.[0] ? (
-                            <img
-                              src={getImageUrl(p.images[0])}
-                              alt={p.name}
-                              style={{
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Brand</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((p, i) => {
+                    const status = productStatus(p.stock);
+                    return (
+                      <tr key={p._id}>
+                        <td style={{ color: '#6b7280', fontSize: 13 }}>{i + 1}</td>
+                        <td className="col-name">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            {p.images?.[0] ? (
+                              <img
+                                src={getImageUrl(p.images[0])}
+                                alt={p.name}
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: 6,
+                                  objectFit: 'cover',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            ) : (
+                              <div style={{
                                 width: 36,
                                 height: 36,
                                 borderRadius: 6,
-                                objectFit: 'cover',
+                                background: 'rgba(255,255,255,0.05)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 16,
                                 flexShrink: 0,
-                              }}
-                            />
-                          ) : (
-                            <div style={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 6,
-                              background: 'rgba(255,255,255,0.05)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: 16,
-                              flexShrink: 0,
-                            }}>
-                              📦
-                            </div>
-                          )}
-                          <span>{p.name}</span>
+                              }}>
+                                📦
+                              </div>
+                            )}
+                            <span>{p.name}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="badge badge-gray">{getCategoryName(p) || '—'}</span>
+                        </td>
+                        <td style={{ color: '#9ca3af', fontSize: 13 }}>{p.brand || '—'}</td>
+                        <td style={{ color: '#a78bfa', fontWeight: 600 }}>₹{p.price.toLocaleString()}</td>
+                        <td>
+                          <span className={`badge ${stockBadge(p.stock)}`}>
+                            {p.stock === 0 ? 'Out of stock' : `${p.stock} left`}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge ${status === 'Active' ? 'badge-green' : 'badge-red'}`}>
+                            {status}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>
+                              <EditIcon /> Edit
+                            </button>
+                            <button className="btn btn-danger btn-sm" onClick={() => openDelete(p)}>
+                              <TrashIcon /> Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="md:hidden divide-y divide-[rgba(255,255,255,0.05)]">
+              {filtered.map((p, i) => {
+                const status = productStatus(p.stock);
+                return (
+                  <div key={p._id} className="p-4 flex flex-col gap-4">
+                    {/* Image + Product Details */}
+                    <div className="flex items-start gap-4">
+                      {p.images?.[0] ? (
+                        <img
+                          src={getImageUrl(p.images[0])}
+                          alt={p.name}
+                          className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-2xl flex-shrink-0">
+                          📦
                         </div>
-                      </td>
-                      <td>
-                        <span className="badge badge-gray">{getCategoryName(p) || '—'}</span>
-                      </td>
-                      <td style={{ color: '#9ca3af', fontSize: 13 }}>{p.brand || '—'}</td>
-                      <td style={{ color: '#a78bfa', fontWeight: 600 }}>₹{p.price.toLocaleString()}</td>
-                      <td>
-                        <span className={`badge ${stockBadge(p.stock)}`}>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">#{i + 1}</span>
+                          <span className={`badge ${status === 'Active' ? 'badge-green' : 'badge-red'}`}>
+                            {status}
+                          </span>
+                        </div>
+                        <h3 className="text-white font-semibold text-base mt-0.5 leading-snug break-words">{p.name}</h3>
+                        <p className="text-gray-400 text-xs mt-0.5 truncate">{p.brand || '—'}</p>
+                      </div>
+                    </div>
+
+                    {/* Stacked Fields Details */}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs bg-black/15 p-3 rounded-lg border border-white/5">
+                      <div>
+                        <span className="text-gray-500 block mb-0.5">Category</span>
+                        <span className="badge badge-gray inline-block">{getCategoryName(p) || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 block mb-0.5">Price</span>
+                        <span className="text-[#a78bfa] text-sm font-bold">₹{p.price.toLocaleString()}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-gray-500 block mb-0.5">Stock</span>
+                        <span className={`badge ${stockBadge(p.stock)} inline-block`}>
                           {p.stock === 0 ? 'Out of stock' : `${p.stock} left`}
                         </span>
-                      </td>
-                      <td>
-                        <span className={`badge ${status === 'Active' ? 'badge-green' : 'badge-red'}`}>
-                          {status}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>
-                            <EditIcon /> Edit
-                          </button>
-                          <button className="btn btn-danger btn-sm" onClick={() => openDelete(p)}>
-                            <TrashIcon /> Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex gap-3">
+                      <button className="btn btn-ghost btn-sm flex-1 justify-center py-2" onClick={() => openEdit(p)}>
+                        <EditIcon /> Edit
+                      </button>
+                      <button className="btn btn-danger btn-sm flex-1 justify-center py-2" onClick={() => openDelete(p)}>
+                        <TrashIcon /> Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
