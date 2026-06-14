@@ -46,6 +46,10 @@ export default function ProductsPage() {
   const [existingImages, setExistingImages] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const limit = 10;
   const fileInputRef = useRef(null);
 
   const totalImages = existingImages.length + imageFiles.length;
@@ -67,7 +71,7 @@ export default function ProductsPage() {
       setLoading(true);
       setError('');
       const [productsRes, categoriesRes] = await Promise.all([
-        getProducts({ limit: 100 }),
+        getProducts({ limit: 0 }),
         getCategories(),
       ]);
       setProducts(productsRes.data || []);
@@ -88,6 +92,13 @@ export default function ProductsPage() {
     const matchCat = catFilter === 'All' || getCategoryName(p) === catFilter;
     return matchSearch && matchCat;
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, catFilter]);
+
+  const totalPages = Math.ceil(filtered.length / limit);
+  const paginatedProducts = filtered.slice((page - 1) * limit, page * limit);
 
   const openAdd = () => {
     resetImageState();
@@ -320,11 +331,11 @@ export default function ProductsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((p, i) => {
+                  {paginatedProducts.map((p, i) => {
                     const status = productStatus(p.stock);
                     return (
                       <tr key={p._id}>
-                        <td style={{ color: '#6b7280', fontSize: 13 }}>{i + 1}</td>
+                        <td style={{ color: '#6b7280', fontSize: 13 }}>{(page - 1) * limit + i + 1}</td>
                         <td className="col-name">
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             {p.images?.[0] ? (
@@ -391,7 +402,7 @@ export default function ProductsPage() {
 
             {/* Mobile Cards View */}
             <div className="md:hidden divide-y divide-[rgba(255,255,255,0.05)]">
-              {filtered.map((p, i) => {
+              {paginatedProducts.map((p, i) => {
                 const status = productStatus(p.stock);
                 return (
                   <div key={p._id} className="p-4 flex flex-col gap-4">
@@ -410,7 +421,7 @@ export default function ProductsPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">#{i + 1}</span>
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">#{(page - 1) * limit + i + 1}</span>
                           <span className={`badge ${status === 'Active' ? 'badge-green' : 'badge-red'}`}>
                             {status}
                           </span>
@@ -451,6 +462,77 @@ export default function ProductsPage() {
                 );
               })}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-[rgba(255,255,255,0.06)] px-4 py-4 sm:px-6">
+                <div className="flex flex-1 justify-between sm:hidden">
+                  <button
+                    onClick={() => {
+                      setPage((p) => Math.max(1, p - 1));
+                    }}
+                    disabled={page === 1}
+                    className="relative inline-flex items-center rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-white/5 disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs text-gray-400 self-center font-semibold">Page {page} of {totalPages}</span>
+                  <button
+                    onClick={() => {
+                      setPage((p) => Math.min(totalPages, p + 1));
+                    }}
+                    disabled={page === totalPages}
+                    className="relative ml-3 inline-flex items-center rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-white/5 disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs text-gray-400">
+                      Showing <span className="font-semibold text-white">{(page - 1) * limit + 1}</span> to{' '}
+                      <span className="font-semibold text-white">{Math.min(page * limit, filtered.length)}</span> of{' '}
+                      <span className="font-semibold text-white">{filtered.length}</span> results
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                      <button
+                        onClick={() => setPage(1)}
+                        disabled={page === 1}
+                        className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-[var(--card-border)] hover:bg-white/5 disabled:opacity-40"
+                      >
+                        <span>«</span>
+                      </button>
+                      <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-[var(--card-border)] hover:bg-white/5 disabled:opacity-40"
+                      >
+                        <span>‹</span>
+                      </button>
+                      <span className="relative inline-flex items-center px-4 py-2 text-xs font-semibold text-white ring-1 ring-inset ring-[var(--card-border)] bg-white/5">
+                        Page {page} of {totalPages || 1}
+                      </span>
+                      <button
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-[var(--card-border)] hover:bg-white/5 disabled:opacity-40"
+                      >
+                        <span>›</span>
+                      </button>
+                      <button
+                        onClick={() => setPage(totalPages)}
+                        disabled={page === totalPages}
+                        className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-[var(--card-border)] hover:bg-white/5 disabled:opacity-40"
+                      >
+                        <span>»</span>
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

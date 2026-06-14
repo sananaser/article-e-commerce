@@ -44,12 +44,16 @@ export default function ShopPage() {
   const [viewMode, setViewMode] = useState("grid");
   const productRefs = useRef({});
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const limit = 12; // 12 products per page
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [productsRes, categoriesRes] = await Promise.all([
-        getProducts({ limit: 100 }),
+        getProducts({ limit: 0 }),
         getCategories(),
       ]);
       const products = productsRes.data || [];
@@ -125,12 +129,21 @@ export default function ShopPage() {
   }, [allProducts, category, sort, priceRange, searchQuery]);
 
   useEffect(() => {
+    setPage(1);
+  }, [category, sort, priceRange, searchQuery]);
+
+  const totalPages = Math.ceil(products.length / limit);
+  const paginatedProducts = useMemo(() => {
+    return products.slice((page - 1) * limit, page * limit);
+  }, [products, page, limit]);
+
+  useEffect(() => {
     if (!highlightedId) return;
     const el = productRefs.current[highlightedId];
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [highlightedId, products]);
+  }, [highlightedId, paginatedProducts]);
 
   const clearHighlight = () => {
     const next = new URLSearchParams(searchParams);
@@ -283,24 +296,60 @@ export default function ShopPage() {
               </button>
             </div>
           ) : (
-            !error &&
-            products.map((product) => (
-              <ProductCard
-                key={product._id}
-                cardRef={(el) => {
-                  productRefs.current[product._id] = el;
-                }}
-                product={product}
-                isWishlisted={wishlistIds.has(product._id)}
-                onWishlist={() => toggleWishlist(product._id)}
-                onAddToCart={() => handleAddToCart(product._id)}
-                listMode={viewMode === "list"}
-                highlighted={highlightedId === product._id}
-                onClearHighlight={clearHighlight}
-                canInteract={!!token}
-                addedFeedback={cartFeedback === product._id}
-              />
-            ))
+            !error && (
+              <>
+                <div className="flex flex-col gap-6 w-full col-span-full">
+                  <div className={`shop__products ${viewMode === "list" ? "shop__products--list" : ""}`}>
+                    {paginatedProducts.map((product) => (
+                      <ProductCard
+                        key={product._id}
+                        cardRef={(el) => {
+                          productRefs.current[product._id] = el;
+                        }}
+                        product={product}
+                        isWishlisted={wishlistIds.has(product._id)}
+                        onWishlist={() => toggleWishlist(product._id)}
+                        onAddToCart={() => handleAddToCart(product._id)}
+                        listMode={viewMode === "list"}
+                        highlighted={highlightedId === product._id}
+                        onClearHighlight={clearHighlight}
+                        canInteract={!!token}
+                        addedFeedback={cartFeedback === product._id}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Pagination UI */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-[#ede9e3] pt-6 mt-4 w-full">
+                      <button
+                        onClick={() => {
+                          setPage((p) => Math.max(1, p - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={page === 1}
+                        className="px-4 py-2 rounded-lg bg-white border border-[#e0dbd4] text-[#1a1a1a] font-semibold text-xs hover:bg-[#f0ede8] disabled:opacity-40 disabled:hover:bg-white transition-all cursor-pointer"
+                      >
+                        ‹ Previous
+                      </button>
+                      <span className="text-xs text-[#666] font-semibold">
+                        Page {page} of {totalPages}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setPage((p) => Math.min(totalPages, p + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={page === totalPages}
+                        className="px-4 py-2 rounded-lg bg-white border border-[#e0dbd4] text-[#1a1a1a] font-semibold text-xs hover:bg-[#f0ede8] disabled:opacity-40 disabled:hover:bg-white transition-all cursor-pointer"
+                      >
+                        Next ›
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )
           )}
         </div>
       </div>

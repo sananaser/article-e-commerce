@@ -35,8 +35,14 @@ export const getMyOrders = async (token) => {
   return data;
 };
 
-export const getOrders = async (token) => {
-  const response = await fetch(ADMIN_ORDERS_URL, {
+export const getOrders = async (params = {}, token) => {
+  const query = new URLSearchParams();
+  if (params.page)  query.set('page', params.page);
+  if (params.limit) query.set('limit', params.limit);
+
+  const url = query.toString() ? `${ADMIN_ORDERS_URL}?${query.toString()}` : ADMIN_ORDERS_URL;
+
+  const response = await fetch(url, {
     method: 'GET',
     headers: authHeaders(token),
   });

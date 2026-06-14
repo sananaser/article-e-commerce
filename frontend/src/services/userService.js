@@ -6,8 +6,14 @@ const BASE_URL = `${API_BASE_URL}/api/admin/users`;
  * Fetch all users from the backend (admin only)
  * @param {string} token
  */
-export const getUsers = async (token) => {
-  const response = await fetch(BASE_URL, {
+export const getUsers = async (params = {}, token) => {
+  const query = new URLSearchParams();
+  if (params.page)  query.set('page', params.page);
+  if (params.limit) query.set('limit', params.limit);
+
+  const url = query.toString() ? `${BASE_URL}?${query.toString()}` : BASE_URL;
+
+  const response = await fetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -19,7 +25,7 @@ export const getUsers = async (token) => {
   if (!response.ok) {
     throw new Error(data.error || data.message || 'Failed to fetch users');
   }
-  return data; // { success: true, data: [...] }
+  return data; // { success: true, total, pagination, data: [...] }
 };
 
 /**

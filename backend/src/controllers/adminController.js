@@ -35,7 +35,21 @@ const getDashboardStats = asyncHandler(async (req, res, next) => {
 // @route   GET /api/admin/users
 // @access  Private/Admin
 const getUsers = asyncHandler(async (req, res, next) => {
-  const users = await User.find({}).select("-password").sort({ createdAt: -1 }).lean();
+  // Pagination parameters
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  let limit = parseInt(req.query.limit, 10);
+  if (isNaN(limit) || limit < 0) {
+    limit = 10;
+  }
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  const total = await User.countDocuments();
+
+  let query = User.find({}).select("-password").sort({ createdAt: -1 });
+  if (limit > 0) {
+    query = query.skip(startIndex).limit(limit);
+  }
+  const users = await query.lean();
 
   // Aggregate order counts grouped by user
   const orderCounts = await Order.aggregate([
@@ -60,8 +74,20 @@ const getUsers = asyncHandler(async (req, res, next) => {
     joined: u.createdAt ? u.createdAt.toISOString().split("T")[0] : "",
   }));
 
+  const pagination = {};
+  if (limit > 0) {
+    if (endIndex < total) {
+      pagination.next = { page: page + 1, limit };
+    }
+    if (startIndex > 0) {
+      pagination.prev = { page: page - 1, limit };
+    }
+  }
+
   res.status(200).json({
     success: true,
+    total,
+    pagination,
     data: formattedUsers,
   });
 });
@@ -103,13 +129,40 @@ const toggleUserBlock = asyncHandler(async (req, res, next) => {
 // @route   GET /api/admin/orders
 // @access  Private/Admin
 const getAllOrders = asyncHandler(async (req, res, next) => {
-  const orders = await Order.find({})
+  // Pagination parameters
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  let limit = parseInt(req.query.limit, 10);
+  if (isNaN(limit) || limit < 0) {
+    limit = 10;
+  }
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  const total = await Order.countDocuments();
+
+  let query = Order.find({})
     .populate({ path: "user", select: "name email" })
     .populate({ path: "products.product", select: "name price images brand" })
     .sort("-createdAt");
 
+  if (limit > 0) {
+    query = query.skip(startIndex).limit(limit);
+  }
+  const orders = await query;
+
+  const pagination = {};
+  if (limit > 0) {
+    if (endIndex < total) {
+      pagination.next = { page: page + 1, limit };
+    }
+    if (startIndex > 0) {
+      pagination.prev = { page: page - 1, limit };
+    }
+  }
+
   res.status(200).json({
     success: true,
+    total,
+    pagination,
     count: orders.length,
     data: orders,
   });
