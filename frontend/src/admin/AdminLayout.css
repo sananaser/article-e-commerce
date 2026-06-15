@@ -259,7 +259,7 @@
 .admin-content {
   flex: 1;
   overflow-y: auto;
-  padding: 28px;
+  padding: 40px;
   background: var(--content-bg);
 }
 
@@ -295,7 +295,7 @@
   }
 
   .admin-content {
-    padding: 16px;
+    padding: 20px;
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 }
@@ -306,7 +306,7 @@
 .admin-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 40px;
 }
 
 /* Page header */
@@ -336,7 +336,7 @@
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
 .stat-card {
@@ -749,7 +749,7 @@
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 28px;
 }
 
 @media (max-width: 960px) {
