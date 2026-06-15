@@ -137,7 +137,7 @@ export default function UsersPage() {
                             width: 34, height: 34, borderRadius: '50%',
                             background: u.role === 'admin'
                               ? 'linear-gradient(135deg, #f59e0b, #ef4444)'
-                              : 'linear-gradient(135deg, #7c3aed, #6366f1)',
+                              : 'linear-gradient(135deg, #b06a4f, #8a4d36)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
                           }}>
@@ -188,7 +188,7 @@ export default function UsersPage() {
                       width: 40, height: 40, borderRadius: '50%',
                       background: u.role === 'admin'
                         ? 'linear-gradient(135deg, #f59e0b, #ef4444)'
-                        : 'linear-gradient(135deg, #7c3aed, #6366f1)',
+                        : 'linear-gradient(135deg, #b06a4f, #8a4d36)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 16, fontWeight: 700, color: '#fff', flexShrink: 0,
                     }}>

@@ -205,7 +205,7 @@ export default function OrdersPage() {
                   {paginatedOrders.map((o) => (
                     <tr key={o._id}>
                       <td>
-                        <code style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
+                        <code style={{ background: 'rgba(176,106,79,0.12)', color: '#b06a4f', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
                           {o.id}
                         </code>
                       </td>
@@ -248,7 +248,7 @@ export default function OrdersPage() {
                   {/* Order Header */}
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <code style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
+                      <code style={{ background: 'rgba(176,106,79,0.12)', color: '#b06a4f', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
                         {o.id}
                       </code>
                       <h3 className="text-white font-semibold text-base mt-1.5 leading-snug break-words">{o.customer}</h3>
@@ -266,7 +266,7 @@ export default function OrdersPage() {
                     </div>
                     <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
                       <span className="text-gray-400">Amount</span>
-                      <span className="text-[#a78bfa] font-bold">₹{o.amount.toLocaleString()}</span>
+                      <span className="text-[#b06a4f] font-bold">₹{o.amount.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Date</span>
@@ -392,7 +392,7 @@ export default function OrdersPage() {
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '14px 16px', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <p style={{ margin: '0 0 4px', fontSize: 12, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Total</p>
-                  <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#a78bfa' }}>₹{detailOrder.amount.toLocaleString()}</p>
+                  <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#b06a4f' }}>₹{detailOrder.amount.toLocaleString()}</p>
                 </div>
               </div>
 
@@ -428,7 +428,7 @@ export default function OrdersPage() {
                         <span style={{ color: '#f3f4f6', fontSize: 13 }}>
                           {item.product?.name || 'Product'} × {item.quantity}
                         </span>
-                        <span style={{ color: '#a78bfa', fontSize: 13, fontWeight: 600 }}>
+                        <span style={{ color: '#b06a4f', fontSize: 13, fontWeight: 600 }}>
                           ₹{(item.price * item.quantity).toLocaleString()}
                         </span>
                       </div>

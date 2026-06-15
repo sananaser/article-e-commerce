@@ -24,7 +24,13 @@ function App() {
         <Route path="/login"    element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* ── Protected customer routes ──────────────────────────── */}
+        {/* ── Public customer routes (no login needed) ──────────── */}
+        <Route element={<CustomerLayout />}>
+          <Route index element={<ShopPage />} />
+          <Route path="shop" element={<ShopPage />} />
+        </Route>
+
+        {/* ── Protected customer routes (login required) ─────────── */}
         <Route
           element={
             <ProtectedRoute>
@@ -32,8 +38,6 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<ShopPage />} />
-          <Route path="shop" element={<ShopPage />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="profile" element={<UserDashboard />} />
         </Route>

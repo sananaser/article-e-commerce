@@ -34,11 +34,11 @@ function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: '#1a1d2e', border: '1px solid rgba(255,255,255,0.1)',
+      background: '#2c261d', border: '1px solid rgba(255,255,255,0.1)',
       borderRadius: 8, padding: '10px 14px', fontSize: 13,
     }}>
-      <p style={{ margin: '0 0 4px', color: '#9ca3af', fontWeight: 600 }}>{label}</p>
-      <p style={{ margin: 0, color: '#34d399', fontWeight: 700 }}>
+      <p style={{ margin: '0 0 4px', color: '#c4b8a4', fontWeight: 600 }}>{label}</p>
+      <p style={{ margin: 0, color: '#d98d6a', fontWeight: 700 }}>
         ₹{Number(payload[0].value).toLocaleString('en-IN')}
       </p>
     </div>
@@ -61,8 +61,8 @@ export default function RevenueChart({ data, loading }) {
           <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor="#10b981" stopOpacity={0.85} />
-                <stop offset="100%" stopColor="#10b981" stopOpacity={0.2}  />
+                <stop offset="0%"   stopColor="#b06a4f" stopOpacity={0.85} />
+                <stop offset="100%" stopColor="#b06a4f" stopOpacity={0.2}  />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />

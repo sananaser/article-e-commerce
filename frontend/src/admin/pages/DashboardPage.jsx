@@ -73,13 +73,13 @@ export default function DashboardPage() {
 
   /* ── stat cards config ──────────────────────────────────── */
   const statCards = [
-    { label: 'Total Users',    icon: '👥', color: '#6366f1', bg: 'rgba(99,102,241,0.12)',
+    { label: 'Total Users',    icon: '👥', color: '#b06a4f', bg: 'rgba(176,106,79,0.12)',
       value: statsLoading ? '…' : statsError ? '—' : (stats?.totalUsers  ?? 0).toLocaleString() },
-    { label: 'Total Products', icon: '📦', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)',
+    { label: 'Total Products', icon: '📦', color: '#8a6d3b', bg: 'rgba(138,109,59,0.12)',
       value: statsLoading ? '…' : statsError ? '—' : (stats?.totalProducts ?? 0).toLocaleString() },
-    { label: 'Total Orders',   icon: '🛒', color: '#0ea5e9', bg: 'rgba(14,165,233,0.12)',
+    { label: 'Total Orders',   icon: '🛒', color: '#6f7257', bg: 'rgba(111,114,87,0.12)',
       value: statsLoading ? '…' : statsError ? '—' : (stats?.totalOrders  ?? 0).toLocaleString() },
-    { label: 'Total Revenue',  icon: '💰', color: '#10b981', bg: 'rgba(16,185,129,0.12)',
+    { label: 'Total Revenue',  icon: '💰', color: '#8a7f3b', bg: 'rgba(138,127,59,0.12)',
       value: statsLoading ? '…' : statsError ? '—' : formatPrice(stats?.totalRevenue ?? 0) },
   ];
 
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                 {orders.slice(0, 5).map((o) => (
                   <tr key={o._id}>
                     <td>
-                      <code style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
+                      <code style={{ background: 'rgba(176,106,79,0.12)', color: '#b06a4f', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
                         {formatOrderId(o._id)}
                       </code>
                     </td>

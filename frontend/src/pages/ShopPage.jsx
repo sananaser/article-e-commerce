@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { getProducts } from "../services/productService";
@@ -9,7 +9,10 @@ import {
   addToWishlist,
   removeFromWishlist,
 } from "../services/wishlistService";
-import { getImageUrl } from "../config";
+import ShopHero from "../components/shop/ShopHero";
+import CampaignCard from "../components/shop/CampaignCard";
+import QuickViewModal from "../components/shop/QuickViewModal";
+import ProductCard from "../components/ui/ProductCard";
 import "./ShopPage.css";
 
 const PLACEHOLDER_IMAGE =
@@ -21,6 +24,27 @@ const SORT_OPTIONS = [
   { value: "price-high", label: "Price: High to Low" },
 ];
 
+const CAMPAIGN_BLOCKS = [
+  {
+    id: 'tones-of-blue',
+    eyebrow: 'Trending Edit',
+    title: 'Tones of Blue',
+    subtitle: 'Sharp tailoring and denim mood pieces.',
+    cta: 'Shop The Edit',
+    image:
+      'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=1200&q=80',
+  },
+  {
+    id: 'summer-smart',
+    eyebrow: 'Summer Smart Casual',
+    title: 'Fresh Neutrals',
+    subtitle: 'Easy silhouettes for everyday polish.',
+    cta: 'Discover Now',
+    image:
+      'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1200&q=80',
+  },
+];
+
 const getCategoryName = (product) =>
   typeof product.category === "object" ? product.category?.name : "";
 
@@ -30,6 +54,7 @@ export default function ShopPage() {
   const highlightedId = searchParams.get("product") || null;
   const searchQuery = searchParams.get("search")?.toLowerCase() || "";
   const { token } = useAuth();
+  const navigate = useNavigate();
   const { addItem } = useCart();
 
   const [allProducts, setAllProducts] = useState([]);
@@ -137,6 +162,34 @@ export default function ShopPage() {
     return products.slice((page - 1) * limit, page * limit);
   }, [products, page, limit]);
 
+  const feedItems = useMemo(() => {
+    const items = [];
+
+    paginatedProducts.forEach((product, idx) => {
+      items.push({ type: 'product', key: `p-${product._id}`, product });
+
+      if (idx === 2 && CAMPAIGN_BLOCKS[0]) {
+        items.push({
+          type: 'campaign',
+          key: `c-${CAMPAIGN_BLOCKS[0].id}`,
+          campaign: CAMPAIGN_BLOCKS[0],
+          wide: true,
+        });
+      }
+
+      if (idx === 7 && CAMPAIGN_BLOCKS[1]) {
+        items.push({
+          type: 'campaign',
+          key: `c-${CAMPAIGN_BLOCKS[1].id}`,
+          campaign: CAMPAIGN_BLOCKS[1],
+          wide: false,
+        });
+      }
+    });
+
+    return items;
+  }, [paginatedProducts]);
+
   useEffect(() => {
     if (!highlightedId) return;
     const el = productRefs.current[highlightedId];
@@ -152,7 +205,7 @@ export default function ShopPage() {
   };
 
   const toggleWishlist = async (productId) => {
-    if (!token) return;
+    if (!token) { navigate('/login'); return; }
     try {
       if (wishlistIds.has(productId)) {
         const res = await removeFromWishlist(productId, token);
@@ -167,9 +220,10 @@ export default function ShopPage() {
   };
 
   const [cartFeedback, setCartFeedback] = useState(null);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
 
   const handleAddToCart = async (productId) => {
-    if (!token) return;
+    if (!token) { navigate('/login'); return; }
     try {
       await addItem(productId, 1);
       setCartFeedback(productId);
@@ -179,8 +233,56 @@ export default function ShopPage() {
     }
   };
 
+  const openQuickView = (product) => {
+    setQuickViewProduct(product);
+  };
+
+  const closeQuickView = () => {
+    setQuickViewProduct(null);
+  };
+
+  const handleQuickViewAddToCart = async () => {
+    if (!quickViewProduct) return;
+    await handleAddToCart(quickViewProduct._id);
+    setQuickViewProduct(null);
+  };
+
+  const handleQuickViewWishlist = async () => {
+    if (!quickViewProduct) return;
+    await toggleWishlist(quickViewProduct._id);
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setQuickViewProduct(null);
+    };
+    if (quickViewProduct) {
+      document.body.classList.add("quick-view-open");
+      window.addEventListener("keydown", onKeyDown);
+    }
+    return () => {
+      document.body.classList.remove("quick-view-open");
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [quickViewProduct]);
+
   return (
-    <div className="shop">
+    <div className="shop-page">
+      {/* ── Hero Banner ── */}
+      <ShopHero
+        label="Summer Drop — 2025"
+        heading={<>Move in<br />Color</>}
+        sub="Lightweight fits, bold shades, and effortless everyday energy."
+        ctaLabel="Explore Now"
+        onExplore={() =>
+          document
+            .getElementById("shop-products")
+            ?.scrollIntoView({ behavior: "smooth" })
+        }
+      />
+
+      {/* ── Shop Grid ── */}
+      <div className="shop" id="shop-products">
       <div className="shop__topbar">
         <div>
           <h1 className="shop__title">Unisex Collection</h1>
@@ -266,182 +368,95 @@ export default function ShopPage() {
         </aside>
 
         <div
-          className={`shop__products ${viewMode === "list" ? "shop__products--list" : ""}`}
+          className="shop__products-section"
         >
           {error && (
             <div className="empty-state">
               <i className="ti ti-alert-circle" />
               <p>{error}</p>
-              <button className="btn-primary" onClick={fetchData}>
-                Retry
-              </button>
+              <button className="btn-primary" onClick={fetchData}>Retry</button>
             </div>
           )}
-          {!error && loading ? (
-            <div className="empty-state">
-              <p>Loading products…</p>
-            </div>
-          ) : !error && products.length === 0 ? (
+          {!error && loading && (
+            <div className="empty-state"><p>Loading products…</p></div>
+          )}
+          {!error && !loading && products.length === 0 && (
             <div className="empty-state">
               <i className="ti ti-mood-empty" />
               <p>No products match your filters.</p>
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  setCategory("All");
-                  setPriceRange(maxPrice);
-                }}
-              >
+              <button className="btn-primary" onClick={() => { setCategory("All"); setPriceRange(maxPrice); }}>
                 Clear Filters
               </button>
             </div>
-          ) : (
-            !error && (
-              <>
-                <div className="flex flex-col gap-6 w-full col-span-full">
-                  <div className={`shop__products ${viewMode === "list" ? "shop__products--list" : ""}`}>
-                    {paginatedProducts.map((product) => (
-                      <ProductCard
-                        key={product._id}
-                        cardRef={(el) => {
-                          productRefs.current[product._id] = el;
-                        }}
-                        product={product}
-                        isWishlisted={wishlistIds.has(product._id)}
-                        onWishlist={() => toggleWishlist(product._id)}
-                        onAddToCart={() => handleAddToCart(product._id)}
-                        listMode={viewMode === "list"}
-                        highlighted={highlightedId === product._id}
-                        onClearHighlight={clearHighlight}
-                        canInteract={!!token}
-                        addedFeedback={cartFeedback === product._id}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Pagination UI */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-[#ede9e3] pt-6 mt-4 w-full">
-                      <button
-                        onClick={() => {
-                          setPage((p) => Math.max(1, p - 1));
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        disabled={page === 1}
-                        className="px-4 py-2 rounded-lg bg-white border border-[#e0dbd4] text-[#1a1a1a] font-semibold text-xs hover:bg-[#f0ede8] disabled:opacity-40 disabled:hover:bg-white transition-all cursor-pointer"
-                      >
-                        ‹ Previous
-                      </button>
-                      <span className="text-xs text-[#666] font-semibold">
-                        Page {page} of {totalPages}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setPage((p) => Math.min(totalPages, p + 1));
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        disabled={page === totalPages}
-                        className="px-4 py-2 rounded-lg bg-white border border-[#e0dbd4] text-[#1a1a1a] font-semibold text-xs hover:bg-[#f0ede8] disabled:opacity-40 disabled:hover:bg-white transition-all cursor-pointer"
-                      >
-                        Next ›
-                      </button>
-                    </div>
-                  )}
+          )}
+          {!error && !loading && products.length > 0 && (
+            <>
+              <div className={`shop__products ${viewMode === "list" ? "shop__products--list" : ""}`}>
+                {feedItems.map((item) =>
+                  item.type === 'product' ? (
+                    <ProductCard
+                      key={item.key}
+                      cardRef={(el) => { productRefs.current[item.product._id] = el; }}
+                      product={item.product}
+                      isWishlisted={wishlistIds.has(item.product._id)}
+                      onWishlist={() => toggleWishlist(item.product._id)}
+                      onAddToCart={() => handleAddToCart(item.product._id)}
+                      listMode={viewMode === "list"}
+                      highlighted={highlightedId === item.product._id}
+                      onClearHighlight={clearHighlight}
+                      canInteract={!!token}
+                      addedFeedback={cartFeedback === item.product._id}
+                      onQuickView={() => openQuickView(item.product)}
+                      placeholderImage={PLACEHOLDER_IMAGE}
+                      getCategoryName={getCategoryName}
+                    />
+                  ) : (
+                    <CampaignCard
+                      key={item.key}
+                      campaign={item.campaign}
+                      listMode={viewMode === "list"}
+                      wide={item.wide}
+                    />
+                  )
+                )}
+              </div>
+              {totalPages > 1 && (
+                <div className="shop-pagination">
+                  <button
+                    className="shop-pagination__btn"
+                    onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    disabled={page === 1}
+                  >
+                    ← Previous
+                  </button>
+                  <span className="shop-pagination__info">Page {page} of {totalPages}</span>
+                  <button
+                    className="shop-pagination__btn"
+                    onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    disabled={page === totalPages}
+                  >
+                    Next →
+                  </button>
                 </div>
-              </>
-            )
+              )}
+            </>
           )}
         </div>
       </div>
+      </div>
+
+      {quickViewProduct && (
+        <QuickViewModal
+          product={quickViewProduct}
+          isWishlisted={wishlistIds.has(quickViewProduct._id)}
+          canInteract={!!token}
+          onClose={closeQuickView}
+          onAddToCart={handleQuickViewAddToCart}
+          onToggleWishlist={handleQuickViewWishlist}
+          placeholderImage={PLACEHOLDER_IMAGE}
+          getCategoryName={getCategoryName}
+        />
+      )}
     </div>
   );
 }
-
-// ── Product Card ──────────────────────────────────────────────────
-const ProductCard = ({
-  product,
-  isWishlisted,
-  onWishlist,
-  onAddToCart,
-  listMode,
-  highlighted,
-  onClearHighlight,
-  cardRef,
-  canInteract,
-  addedFeedback,
-}) => {
-  const [adding, setAdding] = useState(false);
-  const inStock = product.stock > 0;
-  const image = getImageUrl(product.images?.[0]) || PLACEHOLDER_IMAGE;
-  const categoryName = getCategoryName(product);
-
-  const handleAddToCart = async (e) => {
-    e.stopPropagation();
-    if (!canInteract || !inStock || adding) return;
-    setAdding(true);
-    try {
-      await onAddToCart();
-    } finally {
-      setAdding(false);
-    }
-  };
-
-  return (
-    <div
-      ref={cardRef}
-      className={`product-card ${listMode ? "product-card--list" : ""} ${highlighted ? "product-card--highlighted" : ""}`}
-      onClick={highlighted ? onClearHighlight : undefined}
-    >
-      <div className="product-card__img-wrap">
-        <img src={image} alt={product.name} className="product-card__img" />
-        {canInteract && (
-          <button
-            className={`product-card__wishlist ${isWishlisted ? "active" : ""}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onWishlist();
-            }}
-            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          >
-            <i className={isWishlisted ? "ti ti-heart-filled" : "ti ti-heart"} />
-          </button>
-        )}
-        {product.featured && (
-          <span className="product-card__tag tag--bestseller">Featured</span>
-        )}
-        {!inStock && <span className="product-card__discount">Sold Out</span>}
-      </div>
-
-      <div className="product-card__info">
-        <p className="product-card__brand">{product.brand || categoryName}</p>
-        <p className="product-card__name">{product.name}</p>
-
-        <div className="product-card__price-row">
-          <span className="product-card__price">
-            ₹{Number(product.price).toLocaleString("en-IN")}
-          </span>
-        </div>
-
-        {listMode && product.description && (
-          <p className="product-card__desc">{product.description}</p>
-        )}
-
-        <button
-          className="product-card__add-btn"
-          disabled={!canInteract || !inStock || adding}
-          onClick={handleAddToCart}
-        >
-          {!canInteract
-            ? "Sign in to buy"
-            : adding
-              ? "Adding…"
-              : addedFeedback
-                ? "Added ✓"
-                : inStock
-                  ? "Add to Cart"
-                  : "Out of Stock"}
-        </button>
-      </div>
-    </div>
-  );
-};

@@ -372,7 +372,7 @@ export default function ProductsPage() {
                           <span className="badge badge-gray">{getCategoryName(p) || '—'}</span>
                         </td>
                         <td style={{ color: '#9ca3af', fontSize: 13 }}>{p.brand || '—'}</td>
-                        <td style={{ color: '#a78bfa', fontWeight: 600 }}>₹{p.price.toLocaleString()}</td>
+                        <td style={{ color: '#b06a4f', fontWeight: 600 }}>₹{p.price.toLocaleString()}</td>
                         <td>
                           <span className={`badge ${stockBadge(p.stock)}`}>
                             {p.stock === 0 ? 'Out of stock' : `${p.stock} left`}
@@ -439,7 +439,7 @@ export default function ProductsPage() {
                       </div>
                       <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
                         <span className="text-gray-400">Price</span>
-                        <span className="text-[#a78bfa] font-bold text-sm">₹{p.price.toLocaleString()}</span>
+                        <span className="text-[#b06a4f] font-bold text-sm">₹{p.price.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Stock</span>

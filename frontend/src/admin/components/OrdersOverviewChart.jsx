@@ -37,11 +37,11 @@ function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: '#1a1d2e', border: '1px solid rgba(255,255,255,0.1)',
+      background: '#2c261d', border: '1px solid rgba(255,255,255,0.1)',
       borderRadius: 8, padding: '10px 14px', fontSize: 13,
     }}>
-      <p style={{ margin: '0 0 4px', color: '#9ca3af', fontWeight: 600 }}>{label}</p>
-      <p style={{ margin: 0, color: '#a78bfa', fontWeight: 700 }}>
+      <p style={{ margin: '0 0 4px', color: '#c4b8a4', fontWeight: 600 }}>{label}</p>
+      <p style={{ margin: 0, color: '#9aa07f', fontWeight: 700 }}>
         {payload[0].value} orders
       </p>
     </div>
@@ -65,12 +65,12 @@ export default function OrdersOverviewChart({ data, loading }) {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
             <XAxis dataKey="day" tick={{ fill: '#6b7280', fontSize: 12 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} axisLine={false} tickLine={false} width={32} allowDecimals={false} />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(167,139,250,0.15)', strokeWidth: 2 }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(111,114,87,0.2)', strokeWidth: 2 }} />
             <Legend wrapperStyle={{ fontSize: 12, color: '#9ca3af', paddingTop: 12 }} formatter={() => 'Orders'} />
             <Line
-              type="monotone" dataKey="orders" stroke="#a78bfa" strokeWidth={2.5}
-              dot={{ fill: '#a78bfa', strokeWidth: 0, r: 4 }}
-              activeDot={{ r: 6, fill: '#7c3aed', stroke: '#a78bfa', strokeWidth: 2 }}
+              type="monotone" dataKey="orders" stroke="#6f7257" strokeWidth={2.5}
+              dot={{ fill: '#6f7257', strokeWidth: 0, r: 4 }}
+              activeDot={{ r: 6, fill: '#4f5340', stroke: '#9aa07f', strokeWidth: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>
