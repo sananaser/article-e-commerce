@@ -68,16 +68,6 @@ export default function AdminLayout() {
             </div>
           ))}
         </nav>
-
-        <div className="sidebar-footer">
-          <div className="sidebar-user">
-            <div className="user-avatar">{user?.name?.[0]?.toUpperCase() || 'A'}</div>
-            <div className="user-info">
-              <p className="user-name">{user?.name || 'Admin'}</p>
-              <p className="user-role">Administrator</p>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* ── Overlay (mobile) ── */}
@@ -102,11 +92,19 @@ export default function AdminLayout() {
               aria-label="Account menu"
             >
               {user?.name?.[0]?.toUpperCase() || 'A'}
+              <span className="topbar-avatar-badge">1</span>
             </button>
             {menuOpen && (
               <>
                 <div className="topbar-menu-overlay" onClick={() => setMenuOpen(false)} />
                 <div className="topbar-menu">
+                  <div className="topbar-menu-user">
+                    <div className="user-avatar">{user?.name?.[0]?.toUpperCase() || 'A'}</div>
+                    <div className="user-info">
+                      <p className="user-name">{user?.name || 'Admin'}</p>
+                      <p className="user-role">{user?.email}</p>
+                    </div>
+                  </div>
                   <button
                     className="topbar-logout"
                     onClick={() => { setMenuOpen(false); handleLogout(); }}

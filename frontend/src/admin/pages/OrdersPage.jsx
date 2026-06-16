@@ -242,16 +242,16 @@ export default function OrdersPage() {
             </div>
 
             {/* Mobile Cards View */}
-            <div className="md:hidden divide-y divide-[rgba(255,255,255,0.05)]">
+            <div className="md:hidden flex flex-col gap-4 p-4">
               {paginatedOrders.map((o) => (
-                <div key={o._id} className="p-4 flex flex-col gap-4">
+                <div key={o._id} className="m-card">
                   {/* Order Header */}
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <code style={{ background: 'rgba(176,106,79,0.12)', color: '#b06a4f', padding: '2px 8px', borderRadius: 5, fontSize: 12 }}>
                         {o.id}
                       </code>
-                      <h3 className="text-white font-semibold text-base mt-1.5 leading-snug break-words">{o.customer}</h3>
+                      <h3 className="m-card-title">{o.customer}</h3>
                     </div>
                     <span className={`badge ${statusBadge[o.status] || 'badge-gray'}`}>
                       {o.status}
@@ -259,18 +259,18 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Order Details */}
-                  <div className="space-y-2.5 text-xs bg-black/15 p-3.5 rounded-lg border border-white/5">
-                    <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
-                      <span className="text-gray-400">Items</span>
-                      <span className="text-gray-200 font-semibold">{o.items} {o.items === 1 ? 'item' : 'items'}</span>
+                  <div className="m-card-details">
+                    <div className="m-card-row">
+                      <span className="m-card-label">Items</span>
+                      <span className="m-card-value">{o.items} {o.items === 1 ? 'item' : 'items'}</span>
                     </div>
-                    <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
-                      <span className="text-gray-400">Amount</span>
+                    <div className="m-card-row">
+                      <span className="m-card-label">Amount</span>
                       <span className="text-[#b06a4f] font-bold">₹{o.amount.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Date</span>
-                      <span className="text-gray-200 font-semibold">{o.date}</span>
+                    <div className="m-card-row">
+                      <span className="m-card-label">Date</span>
+                      <span className="m-card-value">{o.date}</span>
                     </div>
                   </div>
 

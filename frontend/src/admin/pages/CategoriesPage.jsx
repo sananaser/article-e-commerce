@@ -215,33 +215,33 @@ export default function CategoriesPage() {
             </div>
 
             {/* Mobile Cards View */}
-            <div className="md:hidden divide-y divide-[rgba(255,255,255,0.05)]">
+            <div className="md:hidden flex flex-col gap-4 p-4">
               {filtered.map((cat, i) => (
-                <div key={cat._id} className="p-4 flex flex-col gap-4">
+                <div key={cat._id} className="m-card">
                   {/* Category Header */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">#{i + 1}</span>
+                        <span className="m-card-index">#{i + 1}</span>
                         <span className="badge badge-blue">
                           {cat.productCount ?? 0} items
                         </span>
                       </div>
-                      <h3 className="text-white font-semibold text-base mt-1 leading-snug break-words">{cat.name}</h3>
+                      <h3 className="m-card-title">{cat.name}</h3>
                     </div>
                   </div>
 
                   {/* Category Details */}
-                  <div className="space-y-2.5 text-xs bg-black/15 p-3.5 rounded-lg border border-white/5">
-                    <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
-                      <span className="text-gray-400">Slug</span>
-                      <code style={{ background: 'rgba(255,255,255,0.05)', color: '#9ca3af', padding: '2px 8px', borderRadius: 5, fontSize: 11 }}>
+                  <div className="m-card-details">
+                    <div className="m-card-row">
+                      <span className="m-card-label">Slug</span>
+                      <code style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text-h)', padding: '2px 8px', borderRadius: 5, fontSize: 11 }}>
                         {cat.slug}
                       </code>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Created</span>
-                      <span className="text-gray-200 font-semibold">{formatDate(cat.createdAt)}</span>
+                    <div className="m-card-row">
+                      <span className="m-card-label">Created</span>
+                      <span className="m-card-value">{formatDate(cat.createdAt)}</span>
                     </div>
                   </div>
 

@@ -401,11 +401,11 @@ export default function ProductsPage() {
             </div>
 
             {/* Mobile Cards View */}
-            <div className="md:hidden divide-y divide-[rgba(255,255,255,0.05)]">
+            <div className="md:hidden flex flex-col gap-4 p-4">
               {paginatedProducts.map((p, i) => {
                 const status = productStatus(p.stock);
                 return (
-                  <div key={p._id} className="p-4 flex flex-col gap-4">
+                  <div key={p._id} className="m-card">
                     {/* Image + Product Details */}
                     <div className="flex items-start gap-4">
                       {p.images?.[0] ? (
@@ -415,34 +415,34 @@ export default function ProductsPage() {
                           className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-2xl flex-shrink-0">
+                        <div className="w-16 h-16 rounded-lg bg-black/5 border border-[var(--card-border)] flex items-center justify-center text-2xl flex-shrink-0">
                           📦
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">#{(page - 1) * limit + i + 1}</span>
+                          <span className="m-card-index">#{(page - 1) * limit + i + 1}</span>
                           <span className={`badge ${status === 'Active' ? 'badge-green' : 'badge-red'}`}>
                             {status}
                           </span>
                         </div>
-                        <h3 className="text-white font-semibold text-base mt-0.5 leading-snug break-words">{p.name}</h3>
-                        <p className="text-gray-400 text-xs mt-0.5 truncate">{p.brand || '—'}</p>
+                        <h3 className="m-card-title">{p.name}</h3>
+                        <p className="m-card-sub truncate">{p.brand || '—'}</p>
                       </div>
                     </div>
 
                      {/* Key-Value Details */}
-                    <div className="space-y-2.5 text-xs bg-black/15 p-3.5 rounded-lg border border-white/5">
-                      <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
-                        <span className="text-gray-400">Category</span>
+                    <div className="m-card-details">
+                      <div className="m-card-row">
+                        <span className="m-card-label">Category</span>
                         <span className="badge badge-gray">{getCategoryName(p) || '—'}</span>
                       </div>
-                      <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
-                        <span className="text-gray-400">Price</span>
+                      <div className="m-card-row">
+                        <span className="m-card-label">Price</span>
                         <span className="text-[#b06a4f] font-bold text-sm">₹{p.price.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Stock</span>
+                      <div className="m-card-row">
+                        <span className="m-card-label">Stock</span>
                         <span className={`badge ${stockBadge(p.stock)}`}>
                           {p.stock === 0 ? 'Out of stock' : `${p.stock} left`}
                         </span>

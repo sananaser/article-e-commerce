@@ -179,9 +179,9 @@ export default function UsersPage() {
             </div>
 
             {/* Mobile Cards View */}
-            <div className="md:hidden divide-y divide-[rgba(255,255,255,0.05)]">
+            <div className="md:hidden flex flex-col gap-4 p-4">
               {paginatedUsers.map((u, i) => (
-                <div key={u._id} className="p-4 flex flex-col gap-4">
+                <div key={u._id} className="m-card">
                   {/* User Header */}
                   <div className="flex items-start gap-4">
                     <div style={{
@@ -196,7 +196,7 @@ export default function UsersPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">#{(page - 1) * limit + i + 1}</span>
+                        <span className="m-card-index">#{(page - 1) * limit + i + 1}</span>
                         <div className="flex gap-1.5">
                           <span className={`badge ${u.role === 'admin' ? 'badge-yellow' : 'badge-blue'}`}>
                             {u.role}
@@ -206,20 +206,20 @@ export default function UsersPage() {
                           </span>
                         </div>
                       </div>
-                      <h3 className="text-white font-semibold text-base mt-0.5 leading-snug break-words">{u.name}</h3>
-                      <p className="text-gray-400 text-xs mt-0.5 break-all">{u.email}</p>
+                      <h3 className="m-card-title">{u.name}</h3>
+                      <p className="m-card-sub break-all">{u.email}</p>
                     </div>
                   </div>
 
                   {/* Key-Value Details */}
-                  <div className="space-y-2.5 text-xs bg-black/15 p-3.5 rounded-lg border border-white/5">
-                    <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
-                      <span className="text-gray-400">Orders</span>
-                      <span className="text-gray-200 font-semibold">{u.orders}</span>
+                  <div className="m-card-details">
+                    <div className="m-card-row">
+                      <span className="m-card-label">Orders</span>
+                      <span className="m-card-value">{u.orders}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Joined</span>
-                      <span className="text-gray-200 font-semibold">{u.joined}</span>
+                    <div className="m-card-row">
+                      <span className="m-card-label">Joined</span>
+                      <span className="m-card-value">{u.joined}</span>
                     </div>
                   </div>
 
