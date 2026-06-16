@@ -31,6 +31,7 @@ export default function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -76,9 +77,6 @@ export default function AdminLayout() {
               <p className="user-role">Administrator</p>
             </div>
           </div>
-          <button className="sidebar-logout" onClick={handleLogout} title="Sign out">
-            <LogoutIcon />
-          </button>
         </div>
       </aside>
 
@@ -98,7 +96,28 @@ export default function AdminLayout() {
             <HamburgerIcon />
           </button>
           <div className="topbar-right">
-            <div className="topbar-avatar">{user?.name?.[0]?.toUpperCase() || 'A'}</div>
+            <button
+              className="topbar-avatar"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Account menu"
+            >
+              {user?.name?.[0]?.toUpperCase() || 'A'}
+            </button>
+            {menuOpen && (
+              <>
+                <div className="topbar-menu-overlay" onClick={() => setMenuOpen(false)} />
+                <div className="topbar-menu">
+                  <button
+                    className="topbar-logout"
+                    onClick={() => { setMenuOpen(false); handleLogout(); }}
+                    title="Sign out"
+                  >
+                    <LogoutIcon />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </header>
 

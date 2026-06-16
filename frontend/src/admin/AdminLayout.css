@@ -243,6 +243,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-left: auto;
+  position: relative;
 }
 
 .topbar-avatar {
@@ -256,6 +258,48 @@
   font-size: 13px;
   font-weight: 700;
   color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.topbar-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.topbar-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  background: var(--topbar-bg);
+  border: 1px solid var(--topbar-border);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.topbar-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+  transition: all 0.18s;
+}
+
+.topbar-logout:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 /* Content */
